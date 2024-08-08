@@ -4,6 +4,9 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export class VPCStack extends NestedStack {
+
+    public readonly vpcId: string;
+
     /**
      *
      * @param {Construct} scope
@@ -38,24 +41,8 @@ export class VPCStack extends NestedStack {
             },
             ],
         });
-    
-        // 输出 VPC ID
-        new cdk.CfnOutput(this, 'VpcId', {
-            value: vpc.vpcId,
-        });
-    
-        // 输出子网 ID
-        vpc.publicSubnets.forEach((subnet, index) => {
-            new cdk.CfnOutput(this, `PublicSubnet${index + 1}Id`, {
-            value: subnet.subnetId,
-            });
-        });
-    
-        vpc.privateSubnets.forEach((subnet, index) => {
-            new cdk.CfnOutput(this, `PrivateSubnet${index + 1}Id`, {
-            value: subnet.subnetId,
-            });
-        });
+        
+        this.vpcId = vpc.vpcId
     }
 
 }

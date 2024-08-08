@@ -1,16 +1,23 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {VPCStack} from "./vpc-stack"
+import { DynamodbStack } from './dynamodb-stack';
+import { LambdaStack } from './lambda-stack';
+import {ApigatewayStack} from "./apigateway-stack";
 
 export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
     const vpc = new VPCStack(this, "comfyui-vpc");
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'ComfyuiOnAwsEc2Queue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const user_comfyui_servers_table = new DynamodbStack(this, "user_comfyui_servers_table");
+    const lambdas = new LambdaStack(this, "comfyui_lambda_stack", {});
+    const apiGatewayStack = new ApigatewayStack(this, 'apigateway-stack', {
+      comfyuiServersPostFunc: lambdas.comfyuiServersPostFunc,
+      comfyuiServersStopFunc: lambdas.comfyuiServersStopFunc,
+    });
+    new cdk.CfnOutput(this, 'ComfyUI-VPC-ID', {
+      value: vpc.vpcId,
+      exportName: `${id}-VPC-ID`,
+    });
   }
 }
