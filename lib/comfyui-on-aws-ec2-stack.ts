@@ -10,7 +10,11 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
     super(scope, id, props);
     const vpc = new VPCStack(this, "comfyui-vpc");
     const user_comfyui_servers_table = new DynamodbStack(this, "user_comfyui_servers_table");
-    const lambdas = new LambdaStack(this, "comfyui_lambda_stack", {});
+    const lambdas = new LambdaStack(this, "comfyui_lambda_stack", {
+      comfyUISecurityGroup: vpc.comfyUISecurityGroup,
+      vpcId: vpc.vpcId,
+      pubSubnetID: vpc.pubSubnetID
+    });
     const apiGatewayStack = new ApigatewayStack(this, 'apigateway-stack', {
       comfyuiServersPostFunc: lambdas.comfyuiServersPostFunc,
       comfyuiServersStopFunc: lambdas.comfyuiServersStopFunc,

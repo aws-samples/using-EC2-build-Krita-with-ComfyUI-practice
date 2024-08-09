@@ -1,12 +1,15 @@
-import {Duration, NestedStack, NestedStackProps} from 'aws-cdk-lib';
+import {NestedStack, NestedStackProps} from 'aws-cdk-lib';
 import * as cdk from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Constants } from "./constants";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export interface LambdaStackProps extends NestedStackProps {
-    
+    comfyUISecurityGroup: ec2.SecurityGroup,
+    vpcId: string,
+    pubSubnetID: string
 }
 
 export class LambdaStack extends NestedStack {
@@ -48,20 +51,16 @@ export class LambdaStack extends NestedStack {
                 'EC2_KEY_NAME': Constants.EC2_KEY_NAME,
                 'EC2_INSTANCE_TYPE': Constants.EC2_INSTANCE_TYPE,
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
+                'SECURITY_GROUP_ID': props.comfyUISecurityGroup.securityGroupId,
+                'PUB_SUBNET_ID': props.pubSubnetID,
             },
             
         });
 
         this.comfyuiServersStopFunc = new lambda.Function(this, 'ComfyUIServersStop', {
-            runtime: lambda.Runtime.PYTHON_3_11,
+            ...functionSettings,
             functionName: 'ComfyUI-Servers-Stop-Func',
             handler: 'comfyui-servers-stop.lambda_handler',
-            memorySize: 1024,
-            timeout: cdk.Duration.seconds(120),
-            code: lambda.Code.fromAsset('resources/lambda'),
-            architecture: cdk.aws_lambda.Architecture.X86_64,
-            logRetention: cdk.aws_logs.RetentionDays.ONE_WEEK,
-            role: comfyUILambdaRole,
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
             },

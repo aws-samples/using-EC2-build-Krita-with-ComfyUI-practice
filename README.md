@@ -1,8 +1,10 @@
-# Welcome to your CDK TypeScript project
+# 使用Amazon EC2 来构建Comfy UI Servers
 
-This is a blank project for CDK development with TypeScript.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+### 部署步骤
+#### 生成环境变量, 请根据自身环境信息修改`gen_env.sh`后,执行脚本
+```
+sh gen_env.sh
+```
 
 ## Useful commands
 

@@ -9,3 +9,8 @@ EC2_INSTANCE_TYPE='g6.2xlarge'
 
 # DynamoDB Table 名称, 默认为: user-comfyui-servers
 USER_COMFYUI_SERVERS_TABLE='user-comfyui-servers'
+
+echo "EC2_AMI_ID=${EC2_AMI_ID}" > .env
+echo "EC2_KEY_NAME=${EC2_KEY_NAME}" >> .env
+echo "EC2_INSTANCE_TYPE=${EC2_INSTANCE_TYPE}" >> .env
+echo "USER_COMFYUI_SERVERS_TABLE=${USER_COMFYUI_SERVERS_TABLE}" >> .env
