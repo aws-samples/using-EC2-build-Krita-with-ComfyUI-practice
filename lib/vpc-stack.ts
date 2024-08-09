@@ -2,12 +2,14 @@ import {NestedStack} from "aws-cdk-lib";
 import {Construct} from "constructs";
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class VPCStack extends NestedStack {
 
     public readonly vpcId: string;
     public readonly comfyUISecurityGroup: ec2.SecurityGroup;
     public readonly pubSubnetID: string;
+    public readonly comfyuiInstanceProfile: iam.CfnInstanceProfile;
 
     /**
      *
@@ -49,6 +51,21 @@ export class VPCStack extends NestedStack {
         this.comfyUISecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8848), 'Allow access to port 8848');
         
         this.vpcId = vpc.vpcId
+
+        const comfyuiEC2Role = new iam.Role(this, 'ComfyuiEC2Role', {
+            roleName: `comfyui-ec2-role--${cdk.Stack.of(this).region}`,
+            assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+            managedPolicies: [
+                iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
+            ]
+        });
+
+        this.comfyuiInstanceProfile = new iam.CfnInstanceProfile(this, 'ComfyUIInstanceProfile', {
+            instanceProfileName: 'ComfyUI-Instance-Profile',
+            roles: [comfyuiEC2Role.roleName],
+        });
+
     }
 
 }

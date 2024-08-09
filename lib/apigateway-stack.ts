@@ -3,6 +3,7 @@ import {
     aws_apigateway as _apigateway,
     Duration, NestedStackProps
 } from "aws-cdk-lib";
+import { Constants } from "./constants";
 import {Construct} from "constructs";
 import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
@@ -67,5 +68,9 @@ export class ApigatewayStack extends NestedStack {
             }
         });
         comfyuiServersRootPath.addMethod('POST', new _apigateway.LambdaIntegration(props.comfyuiServersPostFunc));
+    
+    
+        cdk.Tags.of(comfyUIServersAPI).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+    
     }
 }

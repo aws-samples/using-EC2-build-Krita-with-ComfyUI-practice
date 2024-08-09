@@ -9,7 +9,8 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 export interface LambdaStackProps extends NestedStackProps {
     comfyUISecurityGroup: ec2.SecurityGroup,
     vpcId: string,
-    pubSubnetID: string
+    pubSubnetID: string,
+    comfyuiInstanceProfile: iam.CfnInstanceProfile,
 }
 
 export class LambdaStack extends NestedStack {
@@ -28,6 +29,7 @@ export class LambdaStack extends NestedStack {
                 iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2FullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName('IAMFullAccess'),
             ],
         });
 
@@ -53,6 +55,8 @@ export class LambdaStack extends NestedStack {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
                 'SECURITY_GROUP_ID': props.comfyUISecurityGroup.securityGroupId,
                 'PUB_SUBNET_ID': props.pubSubnetID,
+                'RESOURCE_TAG': Constants.RESOURCE_TAG,
+                'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
             },
             
         });
@@ -66,5 +70,7 @@ export class LambdaStack extends NestedStack {
             },
         });
 
+        cdk.Tags.of(this.comfyuiServersPostFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+        cdk.Tags.of(this.comfyuiServersStopFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
     }
 }

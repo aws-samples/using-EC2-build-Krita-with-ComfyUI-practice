@@ -6,5 +6,6 @@ export class Constants {
     public static readonly EC2_AMI_ID = process.env.EC2_AMI_ID ??''
     public static readonly EC2_KEY_NAME = process.env.EC2_KEY_NAME ??''
     public static readonly EC2_INSTANCE_TYPE = process.env.EC2_INSTANCE_TYPE ??'g6.2xlarge'
+    public static readonly RESOURCE_TAG = "COMFYUI-SERVERS"
 
 }
