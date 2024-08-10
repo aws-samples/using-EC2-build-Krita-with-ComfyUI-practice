@@ -1,8 +1,7 @@
 import boto3
 import json
 import os
-from boto3.dynamodb.conditions import Key
-from datetime import datetime
+from dbutils import update_status, query_by_username
 
 comfyui_servers_table = os.environ.get('USER_COMFYUI_SERVERS_TABLE')
 dynamodb = boto3.resource('dynamodb')
@@ -20,7 +19,7 @@ def lambda_handler(event, context):
     if result:
         for item in result:
             stop_instance(item['instance_id'])
-            update_status(username, item['instance_id'])
+            update_status(username, item['instance_id'], status='stopping')
             return {
                 "statusCode": 200,
                 "body": json.dumps({"instance_id": item['instance_id'], "code": 200})
@@ -39,38 +38,3 @@ def stop_instance(instance_id):
     except Exception as e:
         print(f'Error stopping instance: {e}')
         raise e
-
-def query_by_username(username):
-    try:
-        response = table.query(
-            KeyConditionExpression=Key('username').eq(username)  # 这里 'username' 是你的分区键名
-        )
-        items = response['Items']
-        return items
-    except Exception as e:
-        print(f"Error querying items: {e}")
-        return None
-
-def update_status(username, instance_id):
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    try:
-        response = table.update_item(
-            Key={
-                'username': username,  # 分区键
-                'instance_id': instance_id  # 排序键
-            },
-            UpdateExpression="SET #status = :stopped, #updated_at = :updated_at",  # 更新表达式
-            ExpressionAttributeNames={
-                '#status': 'status',  # 使用表达式属性名称来避免与保留字冲突
-                '#updated_at': 'updated_at'
-            },
-            ExpressionAttributeValues={
-                ':stopped': 'stopped',  # 新的状态值
-                ':updated_at': now  # 当前时间
-            },
-            ReturnValues="UPDATED_NEW"  # 返回更新后的新值
-        )
-        print("UpdateItem succeeded:", response)
-    except Exception as e:
-        print(f"Error updating item: {e}")

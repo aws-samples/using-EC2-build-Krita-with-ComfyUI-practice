@@ -5,6 +5,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Constants } from "./constants";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as events from 'aws-cdk-lib/aws-events'
+import * as targets from 'aws-cdk-lib/aws-events-targets'
 
 export interface LambdaStackProps extends NestedStackProps {
     comfyUISecurityGroup: ec2.SecurityGroup,
@@ -43,7 +45,7 @@ export class LambdaStack extends NestedStack {
             role: comfyUILambdaRole,
             handler: '',
         }
-
+        // 启动ComfyUI Servers
         this.comfyuiServersPostFunc = new lambda.Function(this, 'ComfyUIServersPost', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Post-Func',
@@ -57,10 +59,12 @@ export class LambdaStack extends NestedStack {
                 'PUB_SUBNET_ID': props.pubSubnetID,
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
+                'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
             },
             
         });
 
+        // 停止ComfyUI Server
         this.comfyuiServersStopFunc = new lambda.Function(this, 'ComfyUIServersStop', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Stop-Func',
@@ -69,7 +73,8 @@ export class LambdaStack extends NestedStack {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
             },
         });
-
+        
+        // 获取ComfyUI Servers信息
         this.comfyuiServersGetFunc = new lambda.Function(this, 'ComfyUIServersGet', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Get-Func',
@@ -79,8 +84,42 @@ export class LambdaStack extends NestedStack {
             },
         });
 
+        /**
+         * 通过Event Bridge监听EC2的状态信息,并通过lambda来修改dynamodb中的记录状态
+         */
+        const comfyuiServersUpdateFunc = new lambda.Function(this, 'ComfyUIServersUpdate', {
+            ...functionSettings,
+            functionName: 'ComfyUI-Servers-Update-Func',
+            handler: 'comfyui-servers-update.lambda_handler',
+            environment: {
+                'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
+                'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
+            },
+        });
+
+        comfyuiServersUpdateFunc.addPermission('AllowEventBridgeInvocation', {
+            principal: new iam.ServicePrincipal('events.amazonaws.com'),
+            action: 'lambda:InvokeFunction',
+            sourceArn: `arn:aws:events:${this.region}:${this.account}:rule/*`, // Replace with your EventBridge rule ARN
+        });
+
+        const rule = new events.Rule(this, 'ComfyUI-Servers-States-Events', {
+            ruleName: 'ComfyUI-Servers-States-Event',
+            eventPattern: {
+                source: ["aws.ec2"],
+                detailType: ["EC2 Instance State-change Notification"],
+                detail: {
+                state: ["running", "stopped"]
+                }
+            }
+        });
+      
+        // 将 Lambda 函数作为目标添加到规则中
+        rule.addTarget(new targets.LambdaFunction(comfyuiServersUpdateFunc));
+    
         cdk.Tags.of(this.comfyuiServersPostFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
         cdk.Tags.of(this.comfyuiServersStopFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
         cdk.Tags.of(this.comfyuiServersGetFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+        cdk.Tags.of(comfyuiServersUpdateFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
     }
 }

@@ -71,7 +71,12 @@ export class ApigatewayStack extends NestedStack {
             }
         });
         comfyuiServersRootPath.addMethod('POST', new _apigateway.LambdaIntegration(props.comfyuiServersPostFunc));
-        comfyuiServersRootPath.addMethod('GET', new _apigateway.LambdaIntegration(props.comfyuiServersGetFunc));
+        comfyuiServersRootPath.addMethod('GET', new _apigateway.LambdaIntegration(props.comfyuiServersGetFunc),
+        {
+            requestParameters: {
+              'method.request.querystring.username': true,
+            },
+        });
 
         const comfyUIServersStopPath = comfyuiServersRootPath.addResource('stop', {
             defaultMethodOptions: {
