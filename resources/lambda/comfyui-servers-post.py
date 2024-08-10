@@ -66,7 +66,7 @@ def create_instance(username, group_name):
                         },
                         {
                             'Key': 'Name',  # 标签键
-                            'Value': body.get('username','No body') + '-comfyui'  # 标签值
+                            'Value': username + '-comfyui'  # 标签值
                         }
                     ]
                 }
