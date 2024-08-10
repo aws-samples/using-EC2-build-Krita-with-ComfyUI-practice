@@ -21,6 +21,10 @@ export class DynamodbStack extends NestedStack {
                 name: "username",
                 type: AttributeType.STRING,
             },
+            sortKey: {
+                name: "instance_id",  // 设置排序键为 instance_id
+                type: AttributeType.STRING,  // 确保类型与实际数据匹配
+            },
             pointInTimeRecovery: true,
             removalPolicy: RemovalPolicy.DESTROY, // NOT recommended for production code
         });

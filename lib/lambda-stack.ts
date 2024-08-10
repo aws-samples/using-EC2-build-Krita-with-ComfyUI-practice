@@ -70,7 +70,17 @@ export class LambdaStack extends NestedStack {
             },
         });
 
+        this.comfyuiServersGetFunc = new lambda.Function(this, 'ComfyUIServersGet', {
+            ...functionSettings,
+            functionName: 'ComfyUI-Servers-Get-Func',
+            handler: 'comfyui-servers-get.lambda_handler',
+            environment: {
+                'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
+            },
+        });
+
         cdk.Tags.of(this.comfyuiServersPostFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
         cdk.Tags.of(this.comfyuiServersStopFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+        cdk.Tags.of(this.comfyuiServersGetFunc).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
     }
 }

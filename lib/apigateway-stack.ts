@@ -11,15 +11,18 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 export interface APIGatewayProps extends NestedStackProps {
     comfyuiServersPostFunc: lambda.IFunction,
     comfyuiServersStopFunc: lambda.IFunction,
+    comfyuiServersGetFunc: lambda.IFunction,
 }
 
 export class ApigatewayStack extends NestedStack {
+
+    public readonly comfyUIServersAPI: _apigateway.RestApi;
 
     constructor(scope: Construct, id: string, props: APIGatewayProps) {
         super(scope, id, props);
 
         const stageName = 'prod';
-        const comfyUIServersAPI = new _apigateway.RestApi(this, 'COMFYUI-SERVERS-API', {
+        this.comfyUIServersAPI = new _apigateway.RestApi(this, 'COMFYUI-SERVERS-API', {
             restApiName: 'COMFYUI-SERVERS-API',
             retainDeployments: false,
             deploy: true,
@@ -42,7 +45,7 @@ export class ApigatewayStack extends NestedStack {
             description: 'COMFYUI-SERVERS-API-KEY'
         });
 
-        const usagePlan = comfyUIServersAPI.addUsagePlan('ComfyUI-API-Key-UsagePlan', {
+        const usagePlan = this.comfyUIServersAPI.addUsagePlan('ComfyUI-API-Key-UsagePlan', {
             name: 'ComfyUI-API-Key-UsagePlan',
             throttle: {
                 burstLimit: 10,
@@ -55,22 +58,31 @@ export class ApigatewayStack extends NestedStack {
             },
             apiStages: [
                 {
-                    api: comfyUIServersAPI,
-                    stage: comfyUIServersAPI.deploymentStage,
+                    api: this.comfyUIServersAPI,
+                    stage: this.comfyUIServersAPI.deploymentStage,
                 }
             ]
         });
         usagePlan.addApiKey(apiKey)
 
-        const comfyuiServersRootPath = comfyUIServersAPI.root.addResource('comfyui-servers', {
+        const comfyuiServersRootPath = this.comfyUIServersAPI.root.addResource('comfyui-servers', {
             defaultMethodOptions: {
                 apiKeyRequired: true
             }
         });
         comfyuiServersRootPath.addMethod('POST', new _apigateway.LambdaIntegration(props.comfyuiServersPostFunc));
-    
-    
-        cdk.Tags.of(comfyUIServersAPI).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
-    
+        comfyuiServersRootPath.addMethod('GET', new _apigateway.LambdaIntegration(props.comfyuiServersGetFunc));
+
+        const comfyUIServersStopPath = comfyuiServersRootPath.addResource('stop', {
+            defaultMethodOptions: {
+                apiKeyRequired: true
+            }
+        });
+        comfyUIServersStopPath.addMethod('PATCH', new _apigateway.LambdaIntegration(props.comfyuiServersStopFunc));
+        
+        cdk.Tags.of(this.comfyUIServersAPI).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+        
+        new cdk.CfnOutput(scope, 'API-Key ARN', { value: apiKey.keyArn })
+        new cdk.CfnOutput(scope, 'InvokeUrl', { value: this.comfyUIServersAPI.url })
     }
 }

@@ -35,6 +35,7 @@ export class VPCStack extends NestedStack {
                 },
             ],
         });
+        cdk.Tags.of(vpc).add('Name', 'ComfyUI-VPC');
 
         const publicSubnets = vpc.selectSubnets({
             subnetType: ec2.SubnetType.PUBLIC,
@@ -66,6 +67,12 @@ export class VPCStack extends NestedStack {
             roles: [comfyuiEC2Role.roleName],
         });
 
+        const dynamoDbEndpoint = new ec2.GatewayVpcEndpoint(this, 
+            'DynamoDbEndpoint', {
+                vpc,
+                service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+            }
+        );
     }
 
 }
