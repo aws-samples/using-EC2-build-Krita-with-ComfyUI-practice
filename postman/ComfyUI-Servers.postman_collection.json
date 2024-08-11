@@ -1,0 +1,81 @@
+{
+	"info": {
+		"_postman_id": "f749d85c-3b5a-4aba-ba21-b0c777d71204",
+		"name": "ComfyUI-Servers",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2238923"
+	},
+	"item": [
+		{
+			"name": "Create Servers",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Stop Servers",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/stop",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"stop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get ComfyUI Server",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

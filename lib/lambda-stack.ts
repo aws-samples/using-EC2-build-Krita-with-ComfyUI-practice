@@ -67,6 +67,8 @@ export class LambdaStack extends NestedStack {
                 'ACCESS_POINT_GLOBAL_ID': props.accessPointGlobalId,
                 'ACCESS_POINT_GROUPS_ID': props.accessPointGroupsId,
                 'FILE_SYSTEM_ID': props.fileSystemId,
+                'ACCOUNT_ID': cdk.Stack.of(this).account,
+                'REGION': cdk.Stack.of(this).region,
             },
             
         });
