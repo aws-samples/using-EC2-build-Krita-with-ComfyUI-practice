@@ -2,13 +2,17 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as efs from 'aws-cdk-lib/aws-efs';
 import {NestedStack, NestedStackProps} from "aws-cdk-lib";
-
+import * as cdk from 'aws-cdk-lib';
 
 export interface EFSStackProps extends NestedStackProps {
     vpc: ec2.Vpc,
 }
 
 export class EFSStack extends NestedStack {
+
+    public readonly accessPointGlobalId: string;
+    public readonly accessPointGroupsId: string;
+    public readonly fileSystemId: string;
 
     /**
      *
@@ -38,9 +42,8 @@ export class EFSStack extends NestedStack {
             throughputMode: efs.ThroughputMode.BURSTING, // 吞吐模式
         });
     
-        // 创建访问点
-        const accessPoint = fileSystem.addAccessPoint('MyAccessPoint', {
-            path: '/comfyui',
+        const accessPointGlobal = fileSystem.addAccessPoint('AccessPointGlobal', {
+            path: '/global',
             createAcl: {
                 ownerGid: '1000',
                 ownerUid: '1000',
@@ -50,7 +53,29 @@ export class EFSStack extends NestedStack {
                 gid: '1000',
                 uid: '1000',
             },
-        });
+          });
+      
+          const accessPointGroups = fileSystem.addAccessPoint('AccessPointGroups', {
+            path: '/groups',
+            createAcl: {
+                ownerGid: '1000',
+                ownerUid: '1000',
+                permissions: '755',
+            },
+            posixUser: {
+                gid: '1000',
+                uid: '1000',
+            },
+          });
+          // 获取访问点的 ID
+        this.accessPointGlobalId = accessPointGlobal.accessPointId;
+        this.accessPointGroupsId = accessPointGroups.accessPointId;
+        this.fileSystemId = fileSystem.fileSystemId;
+
+        new cdk.CfnOutput(scope, 'FileSystem ID', { value: this.fileSystemId });
+        new cdk.CfnOutput(scope, 'AccessPoint Global ID', { value: this.accessPointGlobalId });
+        new cdk.CfnOutput(scope, 'AccessPoint Groups ID', { value: this.accessPointGroupsId });
+
     }
 
 }

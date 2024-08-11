@@ -6,7 +6,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 
 export class VPCStack extends NestedStack {
 
-    public readonly vpcId: string;
+    public readonly vpc: ec2.Vpc;
     public readonly comfyUISecurityGroup: ec2.SecurityGroup;
     public readonly pubSubnetID: string;
     public readonly comfyuiInstanceProfile: iam.CfnInstanceProfile;
@@ -20,7 +20,7 @@ export class VPCStack extends NestedStack {
     constructor(scope: Construct, id: string, props?: cdk.NestedStackProps) {
         super(scope, id, props);
         // 创建 VPC
-        const vpc = new ec2.Vpc(this, 'comfyui_vpc', {
+        this.vpc = new ec2.Vpc(this, 'comfyui_vpc', {
             maxAzs: 2, // 使用两个可用区
             subnetConfiguration: [
                 {
@@ -35,23 +35,21 @@ export class VPCStack extends NestedStack {
                 },
             ],
         });
-        cdk.Tags.of(vpc).add('Name', 'ComfyUI-VPC');
+        cdk.Tags.of(this.vpc).add('Name', 'ComfyUI-VPC');
 
-        const publicSubnets = vpc.selectSubnets({
+        const publicSubnets = this.vpc.selectSubnets({
             subnetType: ec2.SubnetType.PUBLIC,
         });
         this.pubSubnetID = publicSubnets.subnets[0].subnetId;
 
         this.comfyUISecurityGroup = new ec2.SecurityGroup(this, 'ComfyUISecurityGroup', {
-            vpc,
+            vpc: this.vpc,
             allowAllOutbound: true, // 允许所有出站流量
         });
       
         // 添加入站规则，允许 SSH（端口 22）和 8848 端口的流量
         this.comfyUISecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'Allow SSH access');
         this.comfyUISecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8848), 'Allow access to port 8848');
-        
-        this.vpcId = vpc.vpcId
 
         const comfyuiEC2Role = new iam.Role(this, 'ComfyuiEC2Role', {
             roleName: `comfyui-ec2-role--${cdk.Stack.of(this).region}`,
@@ -59,6 +57,7 @@ export class VPCStack extends NestedStack {
             managedPolicies: [
                 iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonElasticFileSystemClientReadWriteAccess'),
             ]
         });
 
@@ -69,7 +68,7 @@ export class VPCStack extends NestedStack {
 
         const dynamoDbEndpoint = new ec2.GatewayVpcEndpoint(this, 
             'DynamoDbEndpoint', {
-                vpc,
+                vpc: this.vpc,
                 service: ec2.GatewayVpcEndpointAwsService.DYNAMODB,
             }
         );

@@ -7,12 +7,16 @@ import { Constants } from "./constants";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as events from 'aws-cdk-lib/aws-events'
 import * as targets from 'aws-cdk-lib/aws-events-targets'
+import * as efs from 'aws-cdk-lib/aws-efs';
 
 export interface LambdaStackProps extends NestedStackProps {
     comfyUISecurityGroup: ec2.SecurityGroup,
     vpcId: string,
     pubSubnetID: string,
     comfyuiInstanceProfile: iam.CfnInstanceProfile,
+    accessPointGlobalId: string,
+    accessPointGroupsId: string,
+    fileSystemId: string,
 }
 
 export class LambdaStack extends NestedStack {
@@ -60,6 +64,9 @@ export class LambdaStack extends NestedStack {
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
+                'ACCESS_POINT_GLOBAL_ID': props.accessPointGlobalId,
+                'ACCESS_POINT_GROUPS_ID': props.accessPointGroupsId,
+                'FILE_SYSTEM_ID': props.fileSystemId,
             },
             
         });
