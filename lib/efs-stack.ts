@@ -47,11 +47,12 @@ export class EFSStack extends NestedStack {
             createAcl: {
                 ownerGid: '1000',
                 ownerUid: '1000',
-                permissions: '755',
+                permissions: '0755',
             },
             posixUser: {
                 gid: '1000',
                 uid: '1000',
+                secondaryGids: ['1001'],
             },
           });
       
@@ -60,11 +61,12 @@ export class EFSStack extends NestedStack {
             createAcl: {
                 ownerGid: '1000',
                 ownerUid: '1000',
-                permissions: '755',
+                permissions: '0755',
             },
             posixUser: {
                 gid: '1000',
                 uid: '1000',
+                secondaryGids: ['1001'],
             },
           });
           // 获取访问点的 ID

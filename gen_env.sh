@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 打包好的comfyui ubuntu的 AMI ID, 请务必替换成我们自己的AMI ID, 此处需要注意不同机型的AMI有可能不适配,请一定一定要使用指定机型的AMI
-EC2_AMI_ID='ami-0175561a7110d3fcb'
+EC2_AMI_ID='ami-0cc6595684751bb4f'
 # EC2 key pair name, 请务必替换成我们自己的EC2 Key Name
 EC2_KEY_NAME='west'
 # EC2 实例类型, 默认为: g6.2xlarge

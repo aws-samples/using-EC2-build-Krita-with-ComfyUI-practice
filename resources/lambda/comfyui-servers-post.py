@@ -17,6 +17,7 @@ file_system_id = os.environ.get('FILE_SYSTEM_ID')
 
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
+cw = boto3.client('cloudwatch')
 
 def lambda_handler(event, context):
     
@@ -43,43 +44,8 @@ def lambda_handler(event, context):
 
 def create_instance(username, group_name):
 
-    comfyui_home_dir = "/home/ubuntu/comfy/ComfyUI"
-    # 定义用户数据脚本, !!!!!!!!下面的脚本需要根据我们使用的不同AMI,作出调整!!!!!!!
     user_data_script = f"""#!/bin/bash
-    sudo apt-get update
-    sudo apt-get -y install git binutils rustc cargo pkg-config libssl-dev
-    git clone https://github.com/aws/efs-utils
-    cd efs-utils
-    ./build-deb.sh
-    sudo apt-get -y install ./build/amazon-efs-utils*deb
-    
-    mkdir {comfyui_home_dir}/models/loras/global
-    mkdir {comfyui_home_dir}/models/loras/groups
-    chown ubuntu:ubuntu {comfyui_home_dir}/models/loras/global
-    chown ubuntu:ubuntu {comfyui_home_dir}/models/loras/groups
-    mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {comfyui_home_dir}/models/loras/global
-    mount -t efs -o tls,iam,accesspoint={access_point_groups_id} {file_system_id}:/ {comfyui_home_dir}/models/loras/groups
-    echo "{file_system_id} {comfyui_home_dir}/models/loras/global efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
-    echo "{file_system_id} {comfyui_home_dir}/models/loras/groups efs _netdev,tls,iam,accesspoint={access_point_groups_id} 0 0" >> /etc/fstab
-
-    cat <<EOL > /etc/systemd/system/comfyui.service
-    [Unit]
-    Description=ComfyUI Service
-    After=network.target
-
-    [Service]
-    User=ubuntu
-    WorkingDirectory=/home/ubuntu
-    ExecStart=/bin/bash -c 'source /home/ubuntu/venv/bin/activate && python3 {comfyui_home_dir}/main.py --listen 0.0.0.0 --port {comfyui_server_port}'
-    Restart=always
-    Environment=PATH=/home/ubuntu/venv/bin:\$PATH
-
-    [Install]
-    WantedBy=multi-user.target
-    EOL
-    systemctl daemon-reload
-    systemctl start comfyui.service
-    systemctl enable comfyui.service
+    echo "user data"
     """
     
     try:
@@ -113,7 +79,29 @@ def create_instance(username, group_name):
             }
         )
 
-        create_comfyui_servers_info(username=username, group_name=group_name, instance_id=instances[0].id)
+        instance_id=instances[0].id
+
+        # 添加告警,一旦GPU使用过低超过30分钟, 直接Stop
+        cw.put_metric_alarm(
+            AlarmName=f'GPUUtilizationLow-{instance_id}',
+            ComparisonOperator='LessThanThreshold',
+            EvaluationPeriods=3,
+            MetricName='nvidia_smi_utilization_gpu',
+            Namespace='CWAgent',
+            Period=60,
+            Statistic='Maximum',
+            Threshold=1.0,
+            ActionsEnabled=True,
+            AlarmActions=['arn:aws:swf:us-west-2:715371302281:action/actions/AWS_EC2.InstanceId.Stop/1.0'],
+            AlarmDescription='Alarm when GPU utilization is low for 3 minutes',
+            Dimensions=[
+                {
+                    'Name': 'InstanceId',
+                    'Value': instance_id
+                },
+            ]
+        )
+        create_comfyui_servers_info(username=username, group_name=group_name, instance_id=instance_id)
     except Exception as e:
         print(f'Error stopping instance: {e}')
         raise e
