@@ -37,8 +37,14 @@ def lambda_handler(event, context):
         print(f"Username:{username} already has a comfyui server")
         for item in result:
             instance_id = item['instance_id']
-            start_instance(instance_id=instance_id)
-            update_status(username=username, instance_id=instance_id, status='starting')
+            if item['status'] == 'stopped':
+                start_instance(instance_id=instance_id)
+                update_status(username=username, instance_id=instance_id, status='starting')
+            else:
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({"message": f"Can not start instance_id: {instance_id}, current status:{item['status']}", "code": 400})
+                }
     else:
         print(f"Username:{username} doesn't have a comfyui server, now create a new one.")
         instances = create_instance(username=username, group_name=group_name)
