@@ -3,6 +3,7 @@ import {Construct} from "constructs";
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from "aws-cdk-lib/aws-iam";
+import { Constants } from "./constants";
 
 export class VPCStack extends NestedStack {
 
@@ -21,6 +22,7 @@ export class VPCStack extends NestedStack {
         super(scope, id, props);
         // 创建 VPC
         this.vpc = new ec2.Vpc(this, 'comfyui_vpc', {
+            ipAddresses: ec2.IpAddresses.cidr(Constants.VPC_CIDR),
             maxAzs: 2, // 使用两个可用区
             subnetConfiguration: [
                 {

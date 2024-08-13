@@ -6,11 +6,13 @@ EC2_AMI_ID='ami-0cc6595684751bb4f'
 EC2_KEY_NAME='west'
 # EC2 实例类型, 默认为: g6.2xlarge
 EC2_INSTANCE_TYPE='g6.2xlarge'
-
 # DynamoDB Table 名称, 默认为: user-comfyui-servers
 USER_COMFYUI_SERVERS_TABLE='user-comfyui-servers'
+# 指定自己的VPC CIDR
+VPC_CIDR='10.0.0.0/16'
 
 echo "EC2_AMI_ID=${EC2_AMI_ID}" > .env
 echo "EC2_KEY_NAME=${EC2_KEY_NAME}" >> .env
 echo "EC2_INSTANCE_TYPE=${EC2_INSTANCE_TYPE}" >> .env
 echo "USER_COMFYUI_SERVERS_TABLE=${USER_COMFYUI_SERVERS_TABLE}" >> .env
+echo "VPC_CIDR=${VPC_CIDR}" >> .env
