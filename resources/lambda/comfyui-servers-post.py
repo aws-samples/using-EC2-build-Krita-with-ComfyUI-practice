@@ -25,6 +25,7 @@ region = os.environ.get('REGION')
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
 cw = boto3.client('cloudwatch')
+efs_client = boto3.client('efs')
 
 def lambda_handler(event, context):
     
@@ -150,3 +151,49 @@ def start_instance(instance_id):
     except Exception as e:
         print(f'Error stopping instance: {e}')
         raise e
+
+def check_access_point_for_directory(file_system_id, target_directory):
+
+    # 获取指定文件系统的所有 Access Points
+    response = efs_client.describe_access_points(FileSystemId=file_system_id)
+
+    # 遍历所有 Access Points
+    for access_point in response['AccessPoints']:
+        # 获取根目录路径
+        root_directory = access_point['RootDirectory']['Path']
+        
+        # 检查目标目录是否与 Access Point 的根目录匹配
+        if root_directory == target_directory:
+            print(f"Access Point ID: {access_point['AccessPointId']} exists for directory: {target_directory}")
+            return True
+
+    print(f"No Access Point found for directory: {target_directory}")
+    return False
+
+def create_access_point(file_system_id, root_directory_path):
+
+    # 创建 Access Point
+    response = efs_client.create_access_point(
+        ClientToken='unique-client-token',  # 确保这是唯一的
+        FileSystemId=file_system_id,
+        PosixUser={
+            'Uid': 1000,  # POSIX 用户 ID
+            'Gid': 1000,  # POSIX 组 ID
+            'SecondaryGids': [1001]  # 可选的附加组 ID
+        },
+        RootDirectory={
+            'Path': root_directory_path,  # 根目录路径
+            'CreationInfo': {
+                'OwnerUid': 1000,  # 根目录所有者 UID
+                'OwnerGid': 1000,  # 根目录所有者 GID
+                'Permissions': '0755'  # 根目录权限，例如 '750'
+            }
+        },
+        Tags=[
+            {
+                'Key': 'Name',
+                'Value': 'MyAccessPoint'  # 自定义标签
+            }
+        ]
+    )
+    return response
