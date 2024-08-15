@@ -1,5 +1,6 @@
 # 使用Amazon EC2 来构建Comfy UI Servers
-
+### 架构图
+![Arch](arch.jpg "架构图") 
 ### 部署步骤
 #### 生成环境变量, 请根据自身环境信息修改`gen_env.sh`后,执行脚本
 ```
