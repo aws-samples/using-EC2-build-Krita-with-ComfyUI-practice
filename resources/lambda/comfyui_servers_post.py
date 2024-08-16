@@ -56,15 +56,43 @@ def lambda_handler(event, context):
     }
 
 def create_instance(username, group_name):
-
     comfyui_home_dir = '/home/ubuntu/comfy/ComfyUI'
+
+     # EFS directory Check
+    access_point_user_directory=f'/models/users/{username}'
+    access_point_group_directory=f'/models/groups/{group_name}'
+    exists,user_access_point_id = check_access_point_for_directory(file_system_id, access_point_user_directory)
+    if not exists:
+        user_access_point_id = create_access_point(file_system_id, access_point_user_directory, username)['AccessPointId']
+        
+    exists,group_access_point_id = check_access_point_for_directory(file_system_id, access_point_group_directory)
+    if not exists:
+        group_access_point_id = create_access_point(file_system_id, access_point_group_directory, group_name)['AccessPointId']
+    print(f'Current user_access_point_id: {user_access_point_id}, group_access_point_id: {group_access_point_id}')
+
+    # User Data Script
+    models_global_dir = f'{comfyui_home_dir}/models/loras/global'
+    models_group_dir = f'{comfyui_home_dir}/models/loras/group'
+    models_user_dir = f'{comfyui_home_dir}/models/loras/user'
+
     user_data_script = f"""#!/bin/bash
     echo "user data"
     su - ubuntu
-    mkdir {comfyui_home_dir}/models/loras/global
-    mkdir {comfyui_home_dir}/models/loras/groups
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {comfyui_home_dir}/models/loras/global
-    sudo echo "{file_system_id} {comfyui_home_dir}/models/loras/global efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
+    if [ ! -d "{models_global_dir}" ]; then
+        mkdir {models_global_dir}
+    fi
+    if [ ! -d "{models_group_dir}" ]; then
+        mkdir {models_group_dir}
+    fi
+    if [ ! -d "{models_user_dir}" ]; then
+        mkdir {models_user_dir}
+    fi
+    sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {models_global_dir}
+    sudo mount -t efs -o tls,iam,accesspoint={group_access_point_id} {file_system_id}:/ {models_group_dir}
+    sudo mount -t efs -o tls,iam,accesspoint={user_access_point_id} {file_system_id}:/ {models_user_dir}
+    sudo echo "{file_system_id} {models_global_dir} efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
+    sudo echo "{file_system_id} {models_group_dir} efs _netdev,tls,iam,accesspoint={group_access_point_id} 0 0" >> /etc/fstab
+    sudo echo "{file_system_id} {models_user_dir} efs _netdev,tls,iam,accesspoint={user_access_point_id} 0 0" >> /etc/fstab
     """
     
     try:
@@ -162,15 +190,15 @@ def check_access_point_for_directory(file_system_id, target_directory):
         # 检查目标目录是否与 Access Point 的根目录匹配
         if root_directory == target_directory:
             print(f"Access Point ID: {access_point['AccessPointId']} exists for directory: {target_directory}")
-            return True
+            return True,access_point['AccessPointId']
 
     print(f"No Access Point found for directory: {target_directory}")
-    return False
+    return False,'0'
 
-def create_access_point(file_system_id, root_directory_path):
+def create_access_point(file_system_id, root_directory_path, name):
     # 创建 Access Point
     response = efs_client.create_access_point(
-        ClientToken='unique-client-token',  # 确保这是唯一的
+        ClientToken=f'unique-client-token-{name}',  # 确保这是唯一的
         FileSystemId=file_system_id,
         PosixUser={
             'Uid': 1000,  # POSIX 用户 ID
@@ -188,7 +216,7 @@ def create_access_point(file_system_id, root_directory_path):
         Tags=[
             {
                 'Key': 'Name',
-                'Value': 'MyAccessPoint'  # 自定义标签
+                'Value': f'AccessPoint-{name}'  # 自定义标签
             }
         ]
     )

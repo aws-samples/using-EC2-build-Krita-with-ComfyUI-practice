@@ -35,6 +35,7 @@ export class LambdaStack extends NestedStack {
                 iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2FullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonElasticFileSystemFullAccess'),
                 iam.ManagedPolicy.fromAwsManagedPolicyName('IAMFullAccess'),
             ],
         });
