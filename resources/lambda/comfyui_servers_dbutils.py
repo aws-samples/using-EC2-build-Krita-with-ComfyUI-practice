@@ -30,7 +30,7 @@ def update_status(username, instance_id, status):
     except Exception as e:
         print(f"Error updating item: {e}")
 
-def query_by_username(username):
+def query_comfyui_servers_by_username(username):
     try:
         response = table.query(
             KeyConditionExpression=Key('username').eq(username)  # 这里 'username' 是你的分区键名

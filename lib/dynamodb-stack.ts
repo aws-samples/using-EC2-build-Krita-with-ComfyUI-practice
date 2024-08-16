@@ -26,7 +26,7 @@ export class DynamodbStack extends NestedStack {
                 type: AttributeType.STRING,  // 确保类型与实际数据匹配
             },
             pointInTimeRecovery: true,
-            removalPolicy: RemovalPolicy.DESTROY, // NOT recommended for production code
+            removalPolicy: RemovalPolicy.RETAIN, // NOT recommended for production code
         });
 
         const readScaling = user_comfyui_servers_table.autoScaleReadCapacity({
@@ -44,6 +44,39 @@ export class DynamodbStack extends NestedStack {
         });
 
         writeScaling.scaleOnUtilization({
+            targetUtilizationPercent: 65,
+        });
+
+        // ================================Custom Nodes Table=============================== //
+
+        const comfyui_custom_nodes_table = new Table(this, "comfyui_custom_nodes", {
+            tableName: Constants.COMFYUI_CUSTOM_NODES_TABLE,
+            partitionKey: {
+                name: "id",
+                type: AttributeType.STRING,
+            },
+            pointInTimeRecovery: true,
+            removalPolicy: RemovalPolicy.RETAIN, // NOT recommended for production code
+        });
+        comfyui_custom_nodes_table.addGlobalSecondaryIndex({
+            partitionKey: {
+                name: 'node_type',
+                type: AttributeType.STRING,
+            },
+            indexName: 'node-type-index',
+        });
+
+        comfyui_custom_nodes_table.autoScaleReadCapacity({
+            minCapacity: 1,
+            maxCapacity: 10,
+        }).scaleOnUtilization({
+            targetUtilizationPercent: 65,
+        });
+
+        comfyui_custom_nodes_table.autoScaleWriteCapacity({
+            minCapacity: 1,
+            maxCapacity: 10,
+        }).scaleOnUtilization({
             targetUtilizationPercent: 65,
         });
     }

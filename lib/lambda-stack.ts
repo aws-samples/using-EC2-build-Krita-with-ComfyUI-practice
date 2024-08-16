@@ -15,7 +15,6 @@ export interface LambdaStackProps extends NestedStackProps {
     pubSubnetID: string,
     comfyuiInstanceProfile: iam.CfnInstanceProfile,
     accessPointGlobalId: string,
-    accessPointGroupsId: string,
     fileSystemId: string,
 }
 
@@ -24,6 +23,7 @@ export class LambdaStack extends NestedStack {
     public readonly comfyuiServersPostFunc: lambda.IFunction;
     public readonly comfyuiServersStopFunc: lambda.IFunction;
     public readonly comfyuiServersGetFunc: lambda.IFunction;
+    public readonly comfyuiCustomNodesFunc: lambda.IFunction;
 
     constructor(scope: Construct, id: string, props: LambdaStackProps) {
         super(scope, id, props);
@@ -40,7 +40,7 @@ export class LambdaStack extends NestedStack {
         });
 
         const functionSettings : lambda.FunctionProps = {
-            runtime: lambda.Runtime.PYTHON_3_11,
+            runtime: lambda.Runtime.PYTHON_3_12,
             memorySize: 1024,
             timeout: cdk.Duration.seconds(60),
             architecture: cdk.aws_lambda.Architecture.X86_64,
@@ -53,7 +53,7 @@ export class LambdaStack extends NestedStack {
         this.comfyuiServersPostFunc = new lambda.Function(this, 'ComfyUIServersPost', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Post-Func',
-            handler: 'comfyui-servers-post.lambda_handler',
+            handler: 'comfyui_servers_post.lambda_handler',
             environment: {
                 'EC2_AMI_ID': Constants.EC2_AMI_ID,
                 'EC2_KEY_NAME': Constants.EC2_KEY_NAME,
@@ -65,7 +65,6 @@ export class LambdaStack extends NestedStack {
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
                 'ACCESS_POINT_GLOBAL_ID': props.accessPointGlobalId,
-                'ACCESS_POINT_GROUPS_ID': props.accessPointGroupsId,
                 'FILE_SYSTEM_ID': props.fileSystemId,
                 'ACCOUNT_ID': cdk.Stack.of(this).account,
                 'REGION': cdk.Stack.of(this).region,
@@ -77,7 +76,7 @@ export class LambdaStack extends NestedStack {
         this.comfyuiServersStopFunc = new lambda.Function(this, 'ComfyUIServersStop', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Stop-Func',
-            handler: 'comfyui-servers-stop.lambda_handler',
+            handler: 'comfyui_servers_stop.lambda_handler',
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
             },
@@ -87,9 +86,19 @@ export class LambdaStack extends NestedStack {
         this.comfyuiServersGetFunc = new lambda.Function(this, 'ComfyUIServersGet', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Get-Func',
-            handler: 'comfyui-servers-get.lambda_handler',
+            handler: 'comfyui_servers_get.lambda_handler',
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
+            },
+        });
+
+        // ComfyUI Custom Nodes Functions
+        this.comfyuiCustomNodesFunc = new lambda.Function(this, 'ComfyUICustomNodesFunc', {
+            ...functionSettings,
+            functionName: 'ComfyUI-Custom-Nodes-Func',
+            handler: 'comfyui_custom_nodes.lambda_handler',
+            environment: {
+                'COMFYUI_CUSTOM_NODES_TABLE': Constants.COMFYUI_CUSTOM_NODES_TABLE,
             },
         });
 
@@ -99,7 +108,7 @@ export class LambdaStack extends NestedStack {
         const comfyuiServersUpdateFunc = new lambda.Function(this, 'ComfyUIServersUpdate', {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Update-Func',
-            handler: 'comfyui-servers-update.lambda_handler',
+            handler: 'comfyui_servers_update.lambda_handler',
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,

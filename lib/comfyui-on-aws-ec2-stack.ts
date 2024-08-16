@@ -21,7 +21,6 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
       pubSubnetID: vpcStack.pubSubnetID,
       comfyuiInstanceProfile: vpcStack.comfyuiInstanceProfile,
       accessPointGlobalId: efsStack.accessPointGlobalId,
-      accessPointGroupsId: efsStack.accessPointGroupsId,
       fileSystemId: efsStack.fileSystemId,
     });
     
@@ -29,6 +28,7 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
       comfyuiServersPostFunc: lambdas.comfyuiServersPostFunc,
       comfyuiServersStopFunc: lambdas.comfyuiServersStopFunc,
       comfyuiServersGetFunc: lambdas.comfyuiServersGetFunc,
+      comfyuiCustomNodesFunc: lambdas.comfyuiCustomNodesFunc,
     });
     
     new cdk.CfnOutput(this, 'ComfyUI-VPC-ID', {

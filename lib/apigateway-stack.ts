@@ -12,6 +12,7 @@ export interface APIGatewayProps extends NestedStackProps {
     comfyuiServersPostFunc: lambda.IFunction,
     comfyuiServersStopFunc: lambda.IFunction,
     comfyuiServersGetFunc: lambda.IFunction,
+    comfyuiCustomNodesFunc: lambda.IFunction;
 }
 
 export class ApigatewayStack extends NestedStack {
@@ -85,8 +86,25 @@ export class ApigatewayStack extends NestedStack {
         });
         comfyUIServersStopPath.addMethod('PATCH', new _apigateway.LambdaIntegration(props.comfyuiServersStopFunc));
         
-        cdk.Tags.of(this.comfyUIServersAPI).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
+        const comfyUICustomNodesPath = comfyuiServersRootPath.addResource('custom-nodes', {
+            defaultMethodOptions: {
+                apiKeyRequired: true
+            }
+        });
+        comfyUICustomNodesPath.addMethod('ANY', new _apigateway.LambdaIntegration(props.comfyuiCustomNodesFunc))
         
+        const singleComfyUICustomNodesPath = comfyUICustomNodesPath.addResource('{id}', {
+            defaultMethodOptions: {
+                apiKeyRequired: true
+            }
+        });
+        singleComfyUICustomNodesPath.addMethod('ANY', new _apigateway.LambdaIntegration(props.comfyuiCustomNodesFunc),{
+            requestParameters: {
+                'method.request.path.id': true
+            }
+        })
+        
+        cdk.Tags.of(this.comfyUIServersAPI).add('RESOURCE_TAG', Constants.RESOURCE_TAG);
         new cdk.CfnOutput(scope, 'API-Key ARN', { value: apiKey.keyArn })
         new cdk.CfnOutput(scope, 'InvokeUrl', { value: this.comfyUIServersAPI.url })
     }

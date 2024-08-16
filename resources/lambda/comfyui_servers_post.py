@@ -1,7 +1,7 @@
 import boto3
 import os
 import json
-from dbutils import query_by_username, update_status, create_comfyui_servers_info
+from comfyui_servers_dbutils import query_comfyui_servers_by_username, update_status, create_comfyui_servers_info
 
 INSTANCE_GPU=[
     {'instance': 'g5', 'gpu': 'NVIDIA A10G', 'arch': 'Ampere'},
@@ -17,7 +17,6 @@ resource_tag = os.environ.get('RESOURCE_TAG')
 ec2_role_arn = os.environ.get('EC2_ROLE_ARN')
 comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
 access_point_global_id = os.environ.get('ACCESS_POINT_GLOBAL_ID')
-access_point_groups_id = os.environ.get('ACCESS_POINT_GROUPS_ID')
 file_system_id = os.environ.get('FILE_SYSTEM_ID')
 account_id = os.environ.get('ACCOUNT_ID')
 region = os.environ.get('REGION')
@@ -33,7 +32,7 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     username = body.get('username','No body')
     group_name = body.get('group_name','No Group')
-    result = query_by_username(username)
+    result = query_comfyui_servers_by_username(username)
     if result:
         print(f"Username:{username} already has a comfyui server")
         for item in result:
@@ -65,9 +64,7 @@ def create_instance(username, group_name):
     mkdir {comfyui_home_dir}/models/loras/global
     mkdir {comfyui_home_dir}/models/loras/groups
     sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {comfyui_home_dir}/models/loras/global
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_groups_id} {file_system_id}:/ {comfyui_home_dir}/models/loras/groups
     sudo echo "{file_system_id} {comfyui_home_dir}/models/loras/global efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
-    sudo echo "{file_system_id} {comfyui_home_dir}/models/loras/groups efs _netdev,tls,iam,accesspoint={access_point_groups_id} 0 0" >> /etc/fstab
     """
     
     try:
@@ -171,7 +168,6 @@ def check_access_point_for_directory(file_system_id, target_directory):
     return False
 
 def create_access_point(file_system_id, root_directory_path):
-
     # 创建 Access Point
     response = efs_client.create_access_point(
         ClientToken='unique-client-token',  # 确保这是唯一的

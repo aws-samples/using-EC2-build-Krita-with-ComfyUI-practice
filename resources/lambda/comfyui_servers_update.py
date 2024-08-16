@@ -1,6 +1,6 @@
 import boto3
 import os
-from dbutils import update_comfyui_server_info
+from comfyui_servers_dbutils import update_comfyui_server_info
 
 comfyui_servers_table = os.environ.get('USER_COMFYUI_SERVERS_TABLE')
 comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')

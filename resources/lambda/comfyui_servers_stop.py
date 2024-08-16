@@ -1,7 +1,7 @@
 import boto3
 import json
 import os
-from dbutils import update_status, query_by_username
+from comfyui_servers_dbutils import update_status, query_comfyui_servers_by_username
 
 comfyui_servers_table = os.environ.get('USER_COMFYUI_SERVERS_TABLE')
 dynamodb = boto3.resource('dynamodb')
@@ -14,7 +14,7 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     username = body.get('username','No body')
     group_name = body.get('group_name','No Group')
-    result = query_by_username(username)
+    result = query_comfyui_servers_by_username(username)
     
     if result:
         for item in result:
