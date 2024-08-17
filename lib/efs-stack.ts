@@ -11,6 +11,7 @@ export interface EFSStackProps extends NestedStackProps {
 export class EFSStack extends NestedStack {
 
     public readonly accessPointGlobalId: string;
+    public readonly accessPointOutputId: string;
     public readonly fileSystemId: string;
 
     /**
@@ -53,9 +54,24 @@ export class EFSStack extends NestedStack {
                 uid: '1000',
                 secondaryGids: ['1001'],
             },
-          });
+        });
+        
+        const accessPointOutput = fileSystem.addAccessPoint('AccessPointOutput', {
+            path: '/output',
+            createAcl: {
+                ownerGid: '1000',
+                ownerUid: '1000',
+                permissions: '0755',
+            },
+            posixUser: {
+                gid: '1000',
+                uid: '1000',
+                secondaryGids: ['1001'],
+            },
+        });
           // 获取访问点的 ID
         this.accessPointGlobalId = accessPointGlobal.accessPointId;
+        this.accessPointOutputId = accessPointOutput.accessPointId;
         this.fileSystemId = fileSystem.fileSystemId;
 
         new cdk.CfnOutput(scope, 'FileSystem ID', { value: this.fileSystemId });

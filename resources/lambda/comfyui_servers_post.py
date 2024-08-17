@@ -2,6 +2,7 @@ import boto3
 import os
 import json
 from comfyui_servers_dbutils import query_comfyui_servers_by_username, update_status, create_comfyui_servers_info
+from custom_nodes_dbutils import get_custom_nodes_by_type
 
 INSTANCE_GPU=[
     {'instance': 'g5', 'gpu': 'NVIDIA A10G', 'arch': 'Ampere'},
@@ -17,6 +18,7 @@ resource_tag = os.environ.get('RESOURCE_TAG')
 ec2_role_arn = os.environ.get('EC2_ROLE_ARN')
 comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
 access_point_global_id = os.environ.get('ACCESS_POINT_GLOBAL_ID')
+access_point_output_id = os.environ.get('ACCESS_POINT_OUTPUT_ID')
 file_system_id = os.environ.get('FILE_SYSTEM_ID')
 account_id = os.environ.get('ACCOUNT_ID')
 region = os.environ.get('REGION')
@@ -58,6 +60,12 @@ def lambda_handler(event, context):
 def create_instance(username, group_name):
     comfyui_home_dir = '/home/ubuntu/comfy/ComfyUI'
 
+    # Get Global Custom Nodes
+    repo_list = get_custom_nodes_by_type('global')
+    # Convert repo_list to a string for the user data script
+    repo_clone_commands = "\n".join([f"git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}" for repo in repo_list])
+    print(repo_clone_commands)
+
      # EFS directory Check
     access_point_user_directory=f'/models/users/{username}'
     access_point_group_directory=f'/models/groups/{group_name}'
@@ -74,10 +82,15 @@ def create_instance(username, group_name):
     models_global_dir = f'{comfyui_home_dir}/models/loras/global'
     models_group_dir = f'{comfyui_home_dir}/models/loras/group'
     models_user_dir = f'{comfyui_home_dir}/models/loras/user'
+    user_output_dir = f'{comfyui_home_dir}/output'
 
     user_data_script = f"""#!/bin/bash
     echo "user data"
     su - ubuntu
+    # Set current username to file
+    echo "{username}" > /home/ubuntu/username
+
+    # Mount EFS
     if [ ! -d "{models_global_dir}" ]; then
         mkdir {models_global_dir}
     fi
@@ -90,9 +103,15 @@ def create_instance(username, group_name):
     sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {models_global_dir}
     sudo mount -t efs -o tls,iam,accesspoint={group_access_point_id} {file_system_id}:/ {models_group_dir}
     sudo mount -t efs -o tls,iam,accesspoint={user_access_point_id} {file_system_id}:/ {models_user_dir}
+    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/ {user_output_dir}
     sudo echo "{file_system_id} {models_global_dir} efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
     sudo echo "{file_system_id} {models_group_dir} efs _netdev,tls,iam,accesspoint={group_access_point_id} 0 0" >> /etc/fstab
     sudo echo "{file_system_id} {models_user_dir} efs _netdev,tls,iam,accesspoint={user_access_point_id} 0 0" >> /etc/fstab
+    sudo echo "{file_system_id} {user_output_dir} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" >> /etc/fstab
+
+    # Custom Nodes Clone
+    {repo_clone_commands}
+    sudo chown -R ubuntu:ubuntu {comfyui_home_dir}/custom_nodes/*
     """
     
     try:

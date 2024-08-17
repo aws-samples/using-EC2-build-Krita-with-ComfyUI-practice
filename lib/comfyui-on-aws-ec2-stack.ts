@@ -21,6 +21,7 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
       pubSubnetID: vpcStack.pubSubnetID,
       comfyuiInstanceProfile: vpcStack.comfyuiInstanceProfile,
       accessPointGlobalId: efsStack.accessPointGlobalId,
+      accessPointOutputId: efsStack.accessPointOutputId,
       fileSystemId: efsStack.fileSystemId,
     });
     

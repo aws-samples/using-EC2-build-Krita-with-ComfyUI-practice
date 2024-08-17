@@ -15,6 +15,7 @@ export interface LambdaStackProps extends NestedStackProps {
     pubSubnetID: string,
     comfyuiInstanceProfile: iam.CfnInstanceProfile,
     accessPointGlobalId: string,
+    accessPointOutputId: string,
     fileSystemId: string,
 }
 
@@ -60,12 +61,14 @@ export class LambdaStack extends NestedStack {
                 'EC2_KEY_NAME': Constants.EC2_KEY_NAME,
                 'EC2_INSTANCE_TYPE': Constants.EC2_INSTANCE_TYPE,
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
+                'COMFYUI_CUSTOM_NODES_TABLE': Constants.COMFYUI_CUSTOM_NODES_TABLE,
                 'SECURITY_GROUP_ID': props.comfyUISecurityGroup.securityGroupId,
                 'PUB_SUBNET_ID': props.pubSubnetID,
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
                 'ACCESS_POINT_GLOBAL_ID': props.accessPointGlobalId,
+                'ACCESS_POINT_OUTPUT_ID': props.accessPointOutputId,
                 'FILE_SYSTEM_ID': props.fileSystemId,
                 'ACCOUNT_ID': cdk.Stack.of(this).account,
                 'REGION': cdk.Stack.of(this).region,
