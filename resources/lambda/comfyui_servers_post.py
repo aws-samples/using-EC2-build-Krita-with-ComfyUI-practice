@@ -65,9 +65,13 @@ def create_instance(username, group_name):
     # Convert repo_list to a string for the user data script
     repo_clone_commands = "\n".join([
         f"""
-        git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} &&
-        if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt ]; then
-            source /home/ubuntu/venv/bin/activate && pip3 install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt;
+        if [ ! -d {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} ]; then
+            git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} &&
+            if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt ]; then
+                source /home/ubuntu/venv/bin/activate && pip install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt;
+            fi
+        else
+            echo "Repository {repo['repo_url']} already cloned."
         fi
         """
         for repo in repo_list
@@ -90,7 +94,8 @@ def create_instance(username, group_name):
     models_global_dir = f'{comfyui_home_dir}/models/loras/global'
     models_group_dir = f'{comfyui_home_dir}/models/loras/group'
     models_user_dir = f'{comfyui_home_dir}/models/loras/user'
-    user_output_dir = f'{comfyui_home_dir}/output'
+    output_dir = f'{comfyui_home_dir}/output'
+    user_output_dir = f'{output_dir}/{username}'
 
     user_data_script = f"""#!/bin/bash
     echo "user data"
@@ -111,11 +116,16 @@ def create_instance(username, group_name):
     sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {models_global_dir}
     sudo mount -t efs -o tls,iam,accesspoint={group_access_point_id} {file_system_id}:/ {models_group_dir}
     sudo mount -t efs -o tls,iam,accesspoint={user_access_point_id} {file_system_id}:/ {models_user_dir}
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/ {user_output_dir}
+    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/ {output_dir}
     sudo echo "{file_system_id} {models_global_dir} efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
     sudo echo "{file_system_id} {models_group_dir} efs _netdev,tls,iam,accesspoint={group_access_point_id} 0 0" >> /etc/fstab
     sudo echo "{file_system_id} {models_user_dir} efs _netdev,tls,iam,accesspoint={user_access_point_id} 0 0" >> /etc/fstab
-    sudo echo "{file_system_id} {user_output_dir} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" >> /etc/fstab
+    sudo echo "{file_system_id} {output_dir} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" >> /etc/fstab
+
+    # Create User Output Dir
+    if [ ! -d "{user_output_dir}" ]; then
+        mkdir {user_output_dir}
+    fi
 
     # Custom Nodes Clone
     {repo_clone_commands}
