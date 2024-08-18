@@ -63,7 +63,15 @@ def create_instance(username, group_name):
     # Get Global Custom Nodes
     repo_list = get_custom_nodes_by_type('global')
     # Convert repo_list to a string for the user data script
-    repo_clone_commands = "\n".join([f"git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}" for repo in repo_list])
+    repo_clone_commands = "\n".join([
+        f"""
+        git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} &&
+        if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt ]; then
+            source /home/ubuntu/venv/bin/activate && pip3 install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt;
+        fi
+        """
+        for repo in repo_list
+    ])
     print(repo_clone_commands)
 
      # EFS directory Check
