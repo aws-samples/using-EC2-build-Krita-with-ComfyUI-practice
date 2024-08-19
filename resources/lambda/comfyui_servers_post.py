@@ -65,10 +65,10 @@ def create_instance(username, group_name):
     # Convert repo_list to a string for the user data script
     repo_clone_commands = "\n".join([
         f"""
-        if [ ! -d {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} ]; then
-            git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]} &&
-            if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt ]; then
-                source /home/ubuntu/venv/bin/activate && pip install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1]}/requirements.txt;
+        if [ ! -d {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')} ]; then
+            git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')} &&
+            if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')}/requirements.txt ]; then
+                source /home/ubuntu/venv/bin/activate && pip install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')}/requirements.txt;
             fi
         else
             echo "Repository {repo['repo_url']} already cloned."
