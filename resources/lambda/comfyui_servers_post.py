@@ -98,11 +98,7 @@ def create_instance(username, group_name):
     user_output_dir = f'{output_dir}/{username}'
 
     user_data_script = f"""#!/bin/bash
-    echo "user data"
-    su - ubuntu
-    # Set current username to file
-    echo "{username}" > /home/ubuntu/username
-
+    echo "---------user data start-----------"
     # Mount EFS
     if [ ! -d "{models_global_dir}" ]; then
         mkdir {models_global_dir}
@@ -130,6 +126,28 @@ def create_instance(username, group_name):
     # Custom Nodes Clone
     {repo_clone_commands}
     sudo chown -R ubuntu:ubuntu {comfyui_home_dir}/custom_nodes/*
+
+    # Set Comfyui as system service
+    sudo cat << EOF > /etc/systemd/system/comfyui.service
+    [Unit]
+    Description=ComfyUI Service
+    After=network.target
+
+    [Service]
+    User=ubuntu
+    WorkingDirectory=/home/ubuntu/comfy/ComfyUI
+    ExecStart=/home/ubuntu/venv/bin/python3 main.py --listen 0.0.0.0 --port 8848 --output-directory {user_output_dir}
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+EOF
+
+    # start comfyui as system service
+    sudo systemctl daemon-reload
+    sudo systemctl enable comfyui.service
+    sudo systemctl start comfyui.service
+    echo "---------user data end-----------"
     """
     
     try:
