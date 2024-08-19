@@ -4,6 +4,7 @@ import boto3
 import json
 import uuid
 from boto3.dynamodb.conditions import Key
+from botocore.exceptions import ClientError
 
 custom_nodes_table = os.environ.get('COMFYUI_CUSTOM_NODES_TABLE')
 dynamodb = boto3.resource('dynamodb')
@@ -96,13 +97,19 @@ def get_custom_nodes(event):
 
 def delete_custom_nodes(event):
     if event['pathParameters'] and event['pathParameters']['id']:
-        response = table.delete_item(
-            Key={
-                'id': event['pathParameters']['id']  # 替换为您的partition key名称
-            },
-            ReturnValues='ALL_OLD'  # 可选：返回删除前的item属性
-        )
-        return build_response(200, json.dumps({'code': 200, 'response': response}))
+        try:
+            response = table.delete_item(
+                Key={
+                    'id': event['pathParameters']['id']
+                },
+                ConditionExpression='attribute_exists(id)'
+            )
+            return build_response(200, json.dumps({'code': 200, 'response': response}))
+        except ClientError as e:
+            if e.response['Error']['Code'] == "ConditionalCheckFailedException":
+                return build_response(404, json.dumps({'code': 404, 'response': f"item not found with id: {event['pathParameters']['id']}"}))
+            else:
+                print("Unexpected error: %s" % e)
     else:
         return build_response(400, json.dumps({'code': 400, 'message':'parameter id is mandatory' }))
 def build_response(statusCode, body):
