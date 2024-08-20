@@ -91,9 +91,9 @@ def create_instance(username, group_name):
     print(f'Current user_access_point_id: {user_access_point_id}, group_access_point_id: {group_access_point_id}')
 
     # User Data Script
-    models_global_dir = f'{comfyui_home_dir}/models/global'
-    models_group_dir = f'{comfyui_home_dir}/models/group'
-    models_user_dir = f'{comfyui_home_dir}/models/user'
+    models_global_dir = f'{comfyui_home_dir}/models/loras/global'
+    models_group_dir = f'{comfyui_home_dir}/models/loras/group'
+    models_user_dir = f'{comfyui_home_dir}/models/loras/user'
     output_dir = f'{comfyui_home_dir}/output'
     user_output_dir = f'{output_dir}/{group_name}/{username}'
 

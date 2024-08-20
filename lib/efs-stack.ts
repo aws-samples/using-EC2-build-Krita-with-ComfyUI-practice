@@ -39,11 +39,11 @@ export class EFSStack extends NestedStack {
             securityGroup,
             encrypted: true, // 启用加密
             performanceMode: efs.PerformanceMode.GENERAL_PURPOSE, // 性能模式
-            throughputMode: efs.ThroughputMode.BURSTING, // 吞吐模式
+            throughputMode: efs.ThroughputMode.ELASTIC, // 吞吐模式
         });
     
         const accessPointGlobal = fileSystem.addAccessPoint('AccessPointGlobal', {
-            path: '/global',
+            path: '/models/global',
             createAcl: {
                 ownerGid: '1000',
                 ownerUid: '1000',
