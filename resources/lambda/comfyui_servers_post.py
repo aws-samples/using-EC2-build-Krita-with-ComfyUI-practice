@@ -16,18 +16,25 @@ security_group_id = os.environ.get('SECURITY_GROUP_ID')
 pub_subnet_id = os.environ.get('PUB_SUBNET_ID')
 resource_tag = os.environ.get('RESOURCE_TAG')
 ec2_role_arn = os.environ.get('EC2_ROLE_ARN')
-comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
-access_point_global_id = os.environ.get('ACCESS_POINT_GLOBAL_ID')
-access_point_output_id = os.environ.get('ACCESS_POINT_OUTPUT_ID')
-file_system_id = os.environ.get('FILE_SYSTEM_ID')
 account_id = os.environ.get('ACCOUNT_ID')
 region = os.environ.get('REGION')
+
+# EFS
+access_point_models_id = os.environ.get('ACCESS_POINT_MODELS_ID')
+access_point_output_id = os.environ.get('ACCESS_POINT_OUTPUT_ID')
+access_point_start_script_id = os.environ.get('ACCESS_POINT_START_SCRIPT_ID')
+file_system_id = os.environ.get('FILE_SYSTEM_ID')
+mount_path = os.environ.get('MOUNT_PATH')
 
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
 cw = boto3.client('cloudwatch')
 efs_client = boto3.client('efs')
 
+ubuntu_home = '/home/ubuntu'
+comfyui_home_dir = '/home/ubuntu/comfy/ComfyUI'
+start_script_folder = 'start-script'
+model_dirs = ['checkpoints', 'clip', 'clip_vision', 'configs', 'controlnet', 'diffusers', 'diffusion_models', 'embeddings', 'gligen', 'hypernetworks', 'inpaint', 'ipadapter', 'loras', 'mmdets', 'onnx', 'photomaker', 'sams', 'style_models', 'ultralytics', 'unet', 'upscale_models', 'vae', 'vae_approx']
 def lambda_handler(event, context):
     
     print(event)
@@ -58,8 +65,6 @@ def lambda_handler(event, context):
     }
 
 def create_instance(username, group_name):
-    comfyui_home_dir = '/home/ubuntu/comfy/ComfyUI'
-
     # Get Global Custom Nodes
     repo_list = get_custom_nodes_by_type('global')
     # Convert repo_list to a string for the user data script
@@ -78,49 +83,29 @@ def create_instance(username, group_name):
     ])
     print(repo_clone_commands)
 
-     # EFS directory Check
-    access_point_user_directory=f'/models/users/{username}'
-    access_point_group_directory=f'/models/groups/{group_name}'
-    exists,user_access_point_id = check_access_point_for_directory(file_system_id, access_point_user_directory)
-    if not exists:
-        user_access_point_id = create_access_point(file_system_id, access_point_user_directory, username)['AccessPointId']
-        
-    exists,group_access_point_id = check_access_point_for_directory(file_system_id, access_point_group_directory)
-    if not exists:
-        group_access_point_id = create_access_point(file_system_id, access_point_group_directory, group_name)['AccessPointId']
-    print(f'Current user_access_point_id: {user_access_point_id}, group_access_point_id: {group_access_point_id}')
-
     # User Data Script
-    models_global_dir = f'{comfyui_home_dir}/models/loras/global'
-    models_group_dir = f'{comfyui_home_dir}/models/loras/group'
-    models_user_dir = f'{comfyui_home_dir}/models/loras/user'
     output_dir = f'{comfyui_home_dir}/output'
     user_output_dir = f'{output_dir}/{group_name}/{username}'
+    ec2_start_script_dir = f'{ubuntu_home}/{start_script_folder}'
+
+    check_efs_directory_and_produce_mount_cmd(username=username, group_name=group_name)
 
     user_data_script = f"""#!/bin/bash
     echo "---------user data start-----------"
     # Mount EFS
-    if [ ! -d "{models_global_dir}" ]; then
-        mkdir {models_global_dir}
+    if [ ! -d "{ec2_start_script_dir}" ]; then
+        mkdir -p {ec2_start_script_dir}
     fi
-    if [ ! -d "{models_group_dir}" ]; then
-        mkdir {models_group_dir}
-    fi
-    if [ ! -d "{models_user_dir}" ]; then
-        mkdir {models_user_dir}
-    fi
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_global_id} {file_system_id}:/ {models_global_dir}
-    sudo mount -t efs -o tls,iam,accesspoint={group_access_point_id} {file_system_id}:/ {models_group_dir}
-    sudo mount -t efs -o tls,iam,accesspoint={user_access_point_id} {file_system_id}:/ {models_user_dir}
+    sudo mount -t efs -o tls,iam,accesspoint={access_point_start_script_id} {file_system_id}:/{username} {ec2_start_script_dir}
+    sudo echo "{file_system_id}:/{username} {ec2_start_script_dir} efs _netdev,tls,iam,accesspoint={access_point_start_script_id} 0 0" >> /etc/fstab
+    sudo chmod +x {ec2_start_script_dir}/mount.sh
+    bash {ec2_start_script_dir}/mount.sh
+    
     sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/ {output_dir}
-    sudo echo "{file_system_id} {models_global_dir} efs _netdev,tls,iam,accesspoint={access_point_global_id} 0 0" >> /etc/fstab
-    sudo echo "{file_system_id} {models_group_dir} efs _netdev,tls,iam,accesspoint={group_access_point_id} 0 0" >> /etc/fstab
-    sudo echo "{file_system_id} {models_user_dir} efs _netdev,tls,iam,accesspoint={user_access_point_id} 0 0" >> /etc/fstab
     sudo echo "{file_system_id} {output_dir} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" >> /etc/fstab
-
     # Create User Output Dir
     if [ ! -d "{user_output_dir}" ]; then
-        mkdir {user_output_dir}
+        mkdir -p {user_output_dir}
     fi
 
     # Custom Nodes Clone
@@ -231,48 +216,57 @@ def start_instance(instance_id):
     except Exception as e:
         print(f'Error stopping instance: {e}')
         raise e
+    
+def check_create_directory(directory):
+    """检查目录是否存在，如果不存在则创建目录。"""
+    if not os.path.exists(directory):  
+        os.makedirs(directory)  
 
-def check_access_point_for_directory(file_system_id, target_directory):
+def check_efs_directory_and_produce_mount_cmd(group_name, username):
 
-    # 获取指定文件系统的所有 Access Points
-    response = efs_client.describe_access_points(FileSystemId=file_system_id)
+    start_script_dir = os.path.join(mount_path, start_script_folder, username)
+    check_create_directory(start_script_dir)
 
-    # 遍历所有 Access Points
-    for access_point in response['AccessPoints']:
-        # 获取根目录路径
-        root_directory = access_point['RootDirectory']['Path']
-        
-        # 检查目标目录是否与 Access Point 的根目录匹配
-        if root_directory == target_directory:
-            print(f"Access Point ID: {access_point['AccessPointId']} exists for directory: {target_directory}")
-            return True,access_point['AccessPointId']
+    """检查EFS目录并生成挂载命令。"""
+    mount_cmd = ['#!/bin/bash']  # 使用列表来更有效地构建挂载命令
 
-    print(f"No Access Point found for directory: {target_directory}")
-    return False,'0'
+    for dir_name in model_dirs:
+        # 拼接完整路径
+        efs_paths = {
+            'global': os.path.join(mount_path, 'models', dir_name, 'global'),
+            'group': os.path.join(mount_path, 'models', dir_name, group_name),
+            'user': os.path.join(mount_path, 'models', dir_name, username)
+        }
 
-def create_access_point(file_system_id, root_directory_path, name):
-    # 创建 Access Point
-    response = efs_client.create_access_point(
-        ClientToken=f'unique-client-token-{name}',  # 确保这是唯一的
-        FileSystemId=file_system_id,
-        PosixUser={
-            'Uid': 1000,  # POSIX 用户 ID
-            'Gid': 1000,  # POSIX 组 ID
-            'SecondaryGids': [1001]  # 可选的附加组 ID
-        },
-        RootDirectory={
-            'Path': root_directory_path,  # 根目录路径
-            'CreationInfo': {
-                'OwnerUid': 1000,  # 根目录所有者 UID
-                'OwnerGid': 1000,  # 根目录所有者 GID
-                'Permissions': '0755'  # 根目录权限，例如 '750'
-            }
-        },
-        Tags=[
-            {
-                'Key': 'Name',
-                'Value': f'AccessPoint-{name}'  # 自定义标签
-            }
-        ]
-    )
-    return response
+        # 检查并创建EFS路径
+        for path in efs_paths.values():
+            check_create_directory(path)
+
+        # 拼接EC2路径
+        ec2_paths = {
+            'global': os.path.join(comfyui_home_dir, 'models', dir_name, 'global'),
+            'group': os.path.join(comfyui_home_dir, 'models', dir_name, 'group'),
+            'user': os.path.join(comfyui_home_dir, 'models', dir_name, 'user')
+        }
+
+        # 生成挂载命令
+        for key in ec2_paths:
+            ec2_path = ec2_paths[key]
+            mount_cmd.append(f'''
+        if [ ! -d "{ec2_path}" ]; then
+            mkdir -p {ec2_path};
+        fi
+            ''')
+
+        mount_cmd.append(f'''
+        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/global {ec2_paths['global']};
+        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/{group_name} {ec2_paths['group']};
+        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/{username} {ec2_paths['user']};
+        echo "{file_system_id}:/{dir_name}/global {ec2_paths['global']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        ''')
+
+    with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
+        f.write(''.join(mount_cmd))
+    print(f'Mount command has been written to {os.path.join(start_script_dir, f"mount.sh")}')

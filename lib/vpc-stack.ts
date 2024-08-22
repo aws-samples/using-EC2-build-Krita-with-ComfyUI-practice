@@ -35,6 +35,11 @@ export class VPCStack extends NestedStack {
                     name: 'PublicSubnet2',
                     subnetType: ec2.SubnetType.PUBLIC,
                 },
+                {
+                    cidrMask: 24,
+                    name: 'PrivateSubnet1',
+                    subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                },
             ],
         });
         cdk.Tags.of(this.vpc).add('Name', 'ComfyUI-VPC');
@@ -45,6 +50,7 @@ export class VPCStack extends NestedStack {
         this.pubSubnetID = publicSubnets.subnets[0].subnetId;
 
         this.comfyUISecurityGroup = new ec2.SecurityGroup(this, 'ComfyUISecurityGroup', {
+            securityGroupName: 'ComfyuiServer-SG',
             vpc: this.vpc,
             allowAllOutbound: true, // 允许所有出站流量
         });

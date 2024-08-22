@@ -11,11 +11,13 @@ import * as efs from 'aws-cdk-lib/aws-efs';
 
 export interface LambdaStackProps extends NestedStackProps {
     comfyUISecurityGroup: ec2.SecurityGroup,
-    vpcId: string,
+    vpc: ec2.Vpc,
     pubSubnetID: string,
     comfyuiInstanceProfile: iam.CfnInstanceProfile,
-    accessPointGlobalId: string,
-    accessPointOutputId: string,
+    accessPointModels: efs.AccessPoint,
+    accessPointOutput: efs.AccessPoint,
+    accessPointStartScript: efs.AccessPoint,
+    accessPointRoot: efs.AccessPoint,
     fileSystemId: string,
 }
 
@@ -44,13 +46,14 @@ export class LambdaStack extends NestedStack {
         const functionSettings : lambda.FunctionProps = {
             runtime: lambda.Runtime.PYTHON_3_12,
             memorySize: 1024,
-            timeout: cdk.Duration.seconds(60),
+            timeout: cdk.Duration.seconds(120),
             architecture: cdk.aws_lambda.Architecture.X86_64,
             logRetention: cdk.aws_logs.RetentionDays.ONE_WEEK,
             code: lambda.Code.fromAsset('resources/lambda'),
             role: comfyUILambdaRole,
             handler: '',
         }
+        const mountPath = '/mnt/efs'
         // 启动ComfyUI Servers
         this.comfyuiServersPostFunc = new lambda.Function(this, 'ComfyUIServersPost', {
             ...functionSettings,
@@ -67,13 +70,16 @@ export class LambdaStack extends NestedStack {
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
-                'ACCESS_POINT_GLOBAL_ID': props.accessPointGlobalId,
-                'ACCESS_POINT_OUTPUT_ID': props.accessPointOutputId,
+                'ACCESS_POINT_MODELS_ID': props.accessPointModels.accessPointId,
+                'ACCESS_POINT_OUTPUT_ID': props.accessPointOutput.accessPointId,
+                'ACCESS_POINT_START_SCRIPT_ID': props.accessPointStartScript.accessPointId,
                 'FILE_SYSTEM_ID': props.fileSystemId,
                 'ACCOUNT_ID': cdk.Stack.of(this).account,
                 'REGION': cdk.Stack.of(this).region,
+                'MOUNT_PATH': mountPath,
             },
-            
+            vpc: props.vpc,
+            filesystem: lambda.FileSystem.fromEfsAccessPoint(props.accessPointRoot, mountPath),
         });
 
         // 停止ComfyUI Server

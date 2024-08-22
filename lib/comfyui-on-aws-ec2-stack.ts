@@ -17,11 +17,13 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
     
     const lambdas = new LambdaStack(this, "comfyui_lambda_stack", {
       comfyUISecurityGroup: vpcStack.comfyUISecurityGroup,
-      vpcId: vpcStack.vpc.vpcId,
+      vpc: vpcStack.vpc,
       pubSubnetID: vpcStack.pubSubnetID,
       comfyuiInstanceProfile: vpcStack.comfyuiInstanceProfile,
-      accessPointGlobalId: efsStack.accessPointGlobalId,
-      accessPointOutputId: efsStack.accessPointOutputId,
+      accessPointModels: efsStack.accessPointModels,
+      accessPointOutput: efsStack.accessPointOutput,
+      accessPointStartScript: efsStack.accessPointStartScript,
+      accessPointRoot: efsStack.accessPointRoot,
       fileSystemId: efsStack.fileSystemId,
     });
     
