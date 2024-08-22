@@ -234,8 +234,8 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
         # 拼接完整路径
         efs_paths = {
             'global': os.path.join(mount_path, 'models', dir_name, 'global'),
-            'group': os.path.join(mount_path, 'models', dir_name, group_name),
-            'user': os.path.join(mount_path, 'models', dir_name, username)
+            'group': os.path.join(mount_path, 'models', dir_name, 'groups', group_name),
+            'user': os.path.join(mount_path, 'models', dir_name, 'users', username)
         }
 
         # 检查并创建EFS路径
@@ -260,11 +260,11 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
 
         mount_cmd.append(f'''
         sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/global {ec2_paths['global']};
-        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/{group_name} {ec2_paths['group']};
-        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/{username} {ec2_paths['user']};
+        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']};
+        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']};
         echo "{file_system_id}:/{dir_name}/global {ec2_paths['global']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
-        echo "{file_system_id}:/{dir_name}/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
-        echo "{file_system_id}:/{dir_name}/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
         ''')
 
     with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
