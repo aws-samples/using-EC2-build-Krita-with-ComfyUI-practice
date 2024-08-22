@@ -35,11 +35,11 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
       comfyuiCustomNodesFunc: lambdas.comfyuiCustomNodesFunc,
     });
 
-    // const ec2_stack = new EC2Stack(this, 'ec2-stack', {
-    //   vpc: vpcStack.vpc,
-    //   accessPointRoot: efsStack.accessPointRoot,
-    //   fileSystemId: efsStack.fileSystemId,
-    // })
+    const ec2_stack = new EC2Stack(this, 'ec2-stack', {
+      vpc: vpcStack.vpc,
+      accessPointRoot: efsStack.accessPointRoot,
+      fileSystemId: efsStack.fileSystemId,
+    })
     
     new cdk.CfnOutput(this, 'ComfyUI-VPC-ID', {
       value: vpcStack.vpc.vpcId,

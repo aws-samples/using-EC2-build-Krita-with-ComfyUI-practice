@@ -27,7 +27,7 @@ export class EC2Stack extends NestedStack {
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
             managedPolicies: [
                 iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
-                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonElasticFileSystemFullAccess'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonElasticFileSystemClientReadWriteAccess'),
             ],
         });
         
@@ -65,7 +65,7 @@ export class EC2Stack extends NestedStack {
             "}",
             "EOF",
             "mkdir /home/ec2-user/EFS",
-            "sudo mount -t efs -o tls,iam,accesspoint=fsap-0a261483414959f35 fs-01f5898618df789df:/ /home/ec2-user/EFS",
+            `sudo mount -t efs -o tls,iam,accesspoint=${props.accessPointRoot.accessPointId} ${props.fileSystemId}:/ /home/ec2-user/EFS`,
             "filebrowser -d /data/filebrowser/filebrowser.db config init",
             "filebrowser -d /data/filebrowser/filebrowser.db config set --address 0.0.0.0",
             "filebrowser -d /data/filebrowser/filebrowser.db config set --locale zh-cn",
