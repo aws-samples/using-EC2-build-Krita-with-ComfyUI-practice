@@ -90,13 +90,13 @@ export class EFSStack extends NestedStack {
         this.accessPointRoot = fileSystem.addAccessPoint('AccessPointRoot', {
             path: '/',
             createAcl: {
-                ownerGid: '1000',
-                ownerUid: '1000',
+                ownerGid: '0',
+                ownerUid: '0',
                 permissions: '0755',
             },
             posixUser: {
-                gid: '1000',
-                uid: '1000',
+                gid: '0',
+                uid: '0',
                 secondaryGids: ['1001'],
             },
         });
@@ -108,7 +108,7 @@ export class EFSStack extends NestedStack {
         new cdk.CfnOutput(scope, 'AccessPoint Output ID', { value: this.accessPointOutput.accessPointId });
         new cdk.CfnOutput(scope, 'AccessPoint Start Script', { value: this.accessPointStartScript.accessPointId });
         new cdk.CfnOutput(scope, 'AccessPoint Root', { value: this.accessPointRoot.accessPointId });
-        
+
     }
 
 }

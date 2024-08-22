@@ -5,6 +5,7 @@ import { DynamodbStack } from './dynamodb-stack';
 import { LambdaStack } from './lambda-stack';
 import {ApigatewayStack} from "./apigateway-stack";
 import { EFSStack } from './efs-stack';
+import { EC2Stack } from './ec2-stack';
 
 export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -33,6 +34,12 @@ export class ComfyuiOnAwsEc2Stack extends cdk.Stack {
       comfyuiServersGetFunc: lambdas.comfyuiServersGetFunc,
       comfyuiCustomNodesFunc: lambdas.comfyuiCustomNodesFunc,
     });
+
+    // const ec2_stack = new EC2Stack(this, 'ec2-stack', {
+    //   vpc: vpcStack.vpc,
+    //   accessPointRoot: efsStack.accessPointRoot,
+    //   fileSystemId: efsStack.fileSystemId,
+    // })
     
     new cdk.CfnOutput(this, 'ComfyUI-VPC-ID', {
       value: vpcStack.vpc.vpcId,
