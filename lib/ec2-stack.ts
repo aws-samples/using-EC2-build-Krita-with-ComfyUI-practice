@@ -96,6 +96,12 @@ export class EC2Stack extends NestedStack {
             securityGroup,
             vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC }, 
             role: filebroswerRole,
+            blockDevices: [{
+                deviceName: '/dev/xvda',
+                volume: ec2.BlockDeviceVolume.ebs(100, {
+                    volumeType: ec2.EbsDeviceVolumeType.GP3,
+                }),
+            }],
             userData: userData,
         });
 
