@@ -9,7 +9,6 @@ export class VPCStack extends NestedStack {
 
     public readonly vpc: ec2.Vpc;
     public readonly comfyUISecurityGroup: ec2.SecurityGroup;
-    public readonly pubSubnetID: string;
     public readonly comfyuiInstanceProfile: iam.CfnInstanceProfile;
 
     /**
@@ -43,11 +42,6 @@ export class VPCStack extends NestedStack {
             ],
         });
         cdk.Tags.of(this.vpc).add('Name', 'ComfyUI-VPC');
-
-        const publicSubnets = this.vpc.selectSubnets({
-            subnetType: ec2.SubnetType.PUBLIC,
-        });
-        this.pubSubnetID = publicSubnets.subnets[0].subnetId;
 
         this.comfyUISecurityGroup = new ec2.SecurityGroup(this, 'ComfyUISecurityGroup', {
             securityGroupName: 'ComfyuiServer-SG',

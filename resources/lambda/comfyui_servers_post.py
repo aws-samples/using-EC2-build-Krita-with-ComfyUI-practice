@@ -1,6 +1,7 @@
 import boto3
 import os
 import json
+import random
 from comfyui_servers_dbutils import query_comfyui_servers_by_username, update_status, create_comfyui_servers_info
 from custom_nodes_dbutils import get_custom_nodes_by_type
 
@@ -13,7 +14,7 @@ ami_id = os.environ.get('EC2_AMI_ID')
 key_name = os.environ.get('EC2_KEY_NAME')
 instance_type = os.environ.get('EC2_INSTANCE_TYPE')
 security_group_id = os.environ.get('SECURITY_GROUP_ID')
-pub_subnet_id = os.environ.get('PUB_SUBNET_ID')
+ec2_vpc_id = os.environ.get('EC2_VPC_ID')
 resource_tag = os.environ.get('RESOURCE_TAG')
 ec2_role_arn = os.environ.get('EC2_ROLE_ARN')
 ec2_name_prefix = os.environ.get('EC2_NAME_PREFIX')
@@ -144,7 +145,7 @@ EOF
             KeyName=key_name,  # 替换为您的密钥对名称
             UserData=user_data_script,
             SecurityGroupIds=[security_group_id],
-            SubnetId=pub_subnet_id,
+            SubnetId=get_pub_subnet(),
             TagSpecifications=[
                 {
                     'ResourceType': 'instance',  # 指定资源类型为 EC2 实例
@@ -284,3 +285,22 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
     with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
         f.write(''.join(mount_cmd))
     print(f'Mount command has been written to {os.path.join(start_script_dir, f"mount.sh")}')
+
+
+def get_pub_subnet():
+    subnets = ec2_client.describe_subnets(Filters=[{'Name': 'vpc-id', 'Values': [ec2_vpc_id]}])['Subnets']
+    # 存储公有子网
+    public_subnets = []
+    # 遍历子网，检查哪些是公有子网
+    for subnet in subnets:
+        if 'MapPublicIpOnLaunch' in subnet and subnet['MapPublicIpOnLaunch']:
+            public_subnets.append(subnet['SubnetId'])
+
+    # 随机选择一个公有子网
+    if public_subnets:
+        selected_subnet = random.choice(public_subnets)
+        print(f"选择的公有子网: {selected_subnet}")
+        return selected_subnet
+    else:
+        print("没有找到公有子网。")
+        raise Exception(f'No public subnet in VPC: {ec2_vpc_id}')

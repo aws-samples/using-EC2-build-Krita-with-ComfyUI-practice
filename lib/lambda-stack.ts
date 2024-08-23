@@ -12,7 +12,6 @@ import * as efs from 'aws-cdk-lib/aws-efs';
 export interface LambdaStackProps extends NestedStackProps {
     comfyUISecurityGroup: ec2.SecurityGroup,
     vpc: ec2.Vpc,
-    pubSubnetID: string,
     comfyuiInstanceProfile: iam.CfnInstanceProfile,
     accessPointModels: efs.AccessPoint,
     accessPointOutput: efs.AccessPoint,
@@ -66,7 +65,7 @@ export class LambdaStack extends NestedStack {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
                 'COMFYUI_CUSTOM_NODES_TABLE': Constants.COMFYUI_CUSTOM_NODES_TABLE,
                 'SECURITY_GROUP_ID': props.comfyUISecurityGroup.securityGroupId,
-                'PUB_SUBNET_ID': props.pubSubnetID,
+                'EC2_VPC_ID': props.vpc.vpcId,
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
