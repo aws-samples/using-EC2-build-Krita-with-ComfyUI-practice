@@ -10,4 +10,5 @@ export class Constants {
     public static readonly RESOURCE_TAG = "COMFYUI-SERVERS"
     public static readonly COMFYUI_SERVER_PORT = '8848'
     public static readonly VPC_CIDR = process.env.VPC_CIDR ??'10.0.0.0/16'
+    public static readonly EC2_NAME_PREFIX = 'comfyui-'
 }

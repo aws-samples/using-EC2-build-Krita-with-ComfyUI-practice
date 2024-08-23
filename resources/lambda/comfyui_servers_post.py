@@ -16,6 +16,7 @@ security_group_id = os.environ.get('SECURITY_GROUP_ID')
 pub_subnet_id = os.environ.get('PUB_SUBNET_ID')
 resource_tag = os.environ.get('RESOURCE_TAG')
 ec2_role_arn = os.environ.get('EC2_ROLE_ARN')
+ec2_name_prefix = os.environ.get('EC2_NAME_PREFIX')
 account_id = os.environ.get('ACCOUNT_ID')
 region = os.environ.get('REGION')
 
@@ -96,13 +97,11 @@ def create_instance(username, group_name):
     if [ ! -d "{ec2_start_script_dir}" ]; then
         mkdir -p {ec2_start_script_dir}
     fi
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_start_script_id} {file_system_id}:/{username} {ec2_start_script_dir}
-    sudo echo "{file_system_id}:/{username} {ec2_start_script_dir} efs _netdev,tls,iam,accesspoint={access_point_start_script_id} 0 0" >> /etc/fstab
-    sudo chmod +x {ec2_start_script_dir}/mount.sh
+    mount -t efs -o tls,iam,accesspoint={access_point_start_script_id} {file_system_id}:/{username} {ec2_start_script_dir}
+    echo "{file_system_id}:/{username} {ec2_start_script_dir} efs _netdev,tls,iam,accesspoint={access_point_start_script_id} 0 0" >> /etc/fstab
+    chmod +x {ec2_start_script_dir}/mount.sh
     bash {ec2_start_script_dir}/mount.sh
     
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/ {output_dir}
-    sudo echo "{file_system_id} {output_dir} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" >> /etc/fstab
     # Create User Output Dir
     if [ ! -d "{user_output_dir}" ]; then
         mkdir -p {user_output_dir}
@@ -156,7 +155,7 @@ EOF
                         },
                         {
                             'Key': 'Name',  # 标签键
-                            'Value': username  # 标签值
+                            'Value': f'{ec2_name_prefix}{username}'  # 标签值
                         }
                     ]
                 }
@@ -266,6 +265,21 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
         echo "{file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
         echo "{file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
         ''')
+    
+    # 处理不同用户挂载所属Group目录逻辑
+    ec2_group_output_path = os.path.join(comfyui_home_dir, 'output', group_name)
+    efs_group_output_path = os.path.join(mount_path, 'output', group_name)
+    check_create_directory(efs_group_output_path)
+    mount_cmd.append(f'''
+    if [ ! -d "{ec2_group_output_path}" ]; then
+        mkdir -p {ec2_group_output_path};
+    fi
+    ''')
+
+    mount_cmd.append(f'''
+    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/{group_name} {ec2_group_output_path}
+    echo "{file_system_id}:/{group_name} {ec2_group_output_path} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" | sudo tee -a /etc/fstab;
+    ''')
 
     with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
         f.write(''.join(mount_cmd))

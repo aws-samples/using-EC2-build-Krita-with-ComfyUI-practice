@@ -64,7 +64,8 @@ Response:
             "updated_at": "2024-08-15 09:25:42", # 更新时间
             "created_at": "2024-08-11 15:38:58", # 创建时间
             "instance_id": "i-08a522c731994ee3b", # EC2 实例ID
-            "status": "running", # 状态, 主要包含: starting, running, stopping, stopped
+            "status": "running", # EC2 状态, 主要包含: starting, running, stopping, stopped
+            "comfyui_avaiable": true/false, # true: comfyui服务可用, false: comfyui服务不可用
             "username": "user30", # 用户名
             "server_info": "18.237.77.160:8848", # 用户资源信息
             "group_name": "group1" # 部门信息

@@ -77,6 +77,7 @@ export class LambdaStack extends NestedStack {
                 'ACCOUNT_ID': cdk.Stack.of(this).account,
                 'REGION': cdk.Stack.of(this).region,
                 'MOUNT_PATH': mountPath,
+                'EC2_NAME_PREFIX': Constants.EC2_NAME_PREFIX,
             },
             vpc: props.vpc,
             filesystem: lambda.FileSystem.fromEfsAccessPoint(props.accessPointRoot, mountPath),
@@ -122,6 +123,7 @@ export class LambdaStack extends NestedStack {
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
+                'EC2_NAME_PREFIX': Constants.EC2_NAME_PREFIX,
             },
         });
 
