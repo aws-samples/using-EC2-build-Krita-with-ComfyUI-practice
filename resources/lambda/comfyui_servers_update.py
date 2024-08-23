@@ -18,12 +18,15 @@ def lambda_handler(event, context):
     tags = response['Reservations'][0]['Instances'][0].get('Tags', [])
     # 查找 Name 标签
     name_tag = next((tag['Value'] for tag in tags if tag['Key'] == 'Name'), None)
-    username = name_tag.replace(ec2_name_prefix, '')
-    if state == 'running':
-        public_ip = response['Reservations'][0]['Instances'][0].get('PublicIpAddress')
-        server_info = f"{public_ip}:{comfyui_server_port}"
-        update_comfyui_server_info(username=username, instance_id=instance_id, status=state, server_info=server_info)
-    elif state == 'stopped':
-        update_comfyui_server_info(username=username, instance_id=instance_id, status=state, server_info="")
+    if name_tag and name_tag.startswith(ec2_name_prefix):
+        username = name_tag.replace(ec2_name_prefix, '')
+        if state == 'running':
+            public_ip = response['Reservations'][0]['Instances'][0].get('PublicIpAddress')
+            server_info = f"{public_ip}:{comfyui_server_port}"
+            update_comfyui_server_info(username=username, instance_id=instance_id, status=state, server_info=server_info)
+        elif state == 'stopped':
+            update_comfyui_server_info(username=username, instance_id=instance_id, status=state, server_info="")
+        else:
+            raise Exception(f"Not support status: {state}")
     else:
-        raise Exception(f"Not support status: {state}")
+        print(f'Not comfyui instance: {instance_id}')
