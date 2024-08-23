@@ -66,6 +66,7 @@ export class EC2Stack extends NestedStack {
             "EOF",
             "mkdir /home/ec2-user/EFS",
             `sudo mount -t efs -o tls,iam,accesspoint=${props.accessPointRoot.accessPointId} ${props.fileSystemId}:/ /home/ec2-user/EFS`,
+            `echo "${props.fileSystemId}:/ /home/ec2-user/EFS efs _netdev,tls,iam,accesspoint=${props.accessPointRoot.accessPointId} 0 0" | sudo tee -a /etc/fstab;`,
             "filebrowser -d /data/filebrowser/filebrowser.db config init",
             "filebrowser -d /data/filebrowser/filebrowser.db config set --address 0.0.0.0",
             "filebrowser -d /data/filebrowser/filebrowser.db config set --locale zh-cn",
