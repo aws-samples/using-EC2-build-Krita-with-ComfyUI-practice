@@ -14,7 +14,10 @@ def lambda_handler(event, context):
     items = query_comfyui_servers_by_username(username=username)
     if items:
         server_info = items[0]
-        server_info['comfyui_avaiable'] = is_port_open(server_info['server_info'].split(':')[0], int(server_info['server_info'].split(':')[1]))
+        if server_info['status'] == 'running' and server_info['server_info']:
+            server_info['comfyui_avaiable'] = is_port_open(server_info['server_info'].split(':')[0], int(server_info['server_info'].split(':')[1]))
+        else:
+            server_info['comfyui_avaiable'] = False
         return {
             "statusCode": 200,
             "body": json.dumps({"code":200, "server-info":server_info})
