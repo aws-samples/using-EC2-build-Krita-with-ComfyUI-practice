@@ -269,19 +269,22 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
     
     # 处理不同用户挂载所属Group目录逻辑
     ec2_group_output_path = os.path.join(comfyui_home_dir, 'output', group_name)
+    ec2_user_output_path = os.path.join(comfyui_home_dir, 'output', group_name, username)
     efs_group_output_path = os.path.join(mount_path, 'output', group_name)
     check_create_directory(efs_group_output_path)
-    mount_cmd.append(f'''
-    if [ ! -d "{ec2_group_output_path}" ]; then
-        mkdir -p {ec2_group_output_path};
-    fi
-    ''')
 
     mount_cmd.append(f'''
     sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/{group_name} {ec2_group_output_path}
     echo "{file_system_id}:/{group_name} {ec2_group_output_path} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" | sudo tee -a /etc/fstab;
     ''')
-
+    mount_cmd.append(f'''
+    if [ ! -d "{ec2_user_output_path}" ]; then
+        mkdir -p {ec2_user_output_path};
+    fi
+    ''')
+    mount_cmd.append(f'''
+        chown -R ubuntu:ubuntu {ec2_group_output_path}
+    ''')
     with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
         f.write(''.join(mount_cmd))
     print(f'Mount command has been written to {os.path.join(start_script_dir, f"mount.sh")}')
