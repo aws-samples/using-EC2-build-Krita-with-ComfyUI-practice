@@ -48,28 +48,28 @@ export class EFSStack extends NestedStack {
         this.accessPointModels = fileSystem.addAccessPoint('AccessPointModels', {
             path: '/models',
             createAcl: {
-                ownerGid: '1000',
-                ownerUid: '1000',
-                permissions: '0755',
+                ownerGid: '0',
+                ownerUid: '0',
+                permissions: '0777',
             },
             posixUser: {
-                gid: '1000',
-                uid: '1000',
-                secondaryGids: ['1001'],
+                gid: '0',
+                uid: '0',
+                secondaryGids: ['1001','1000'],
             },
         });
         
         this.accessPointOutput = fileSystem.addAccessPoint('AccessPointOutput', {
             path: '/output',
             createAcl: {
-                ownerGid: '1000',
-                ownerUid: '1000',
-                permissions: '0755',
+                ownerGid: '0',
+                ownerUid: '0',
+                permissions: '0777',
             },
             posixUser: {
-                gid: '1000',
-                uid: '1000',
-                secondaryGids: ['1001'],
+                gid: '0',
+                uid: '0',
+                secondaryGids: ['1001','1000'],
             },
         });
 
@@ -92,12 +92,12 @@ export class EFSStack extends NestedStack {
             createAcl: {
                 ownerGid: '0',
                 ownerUid: '0',
-                permissions: '0755',
+                permissions: '0777',
             },
             posixUser: {
                 gid: '0',
                 uid: '0',
-                secondaryGids: ['1001'],
+                secondaryGids: ['1001','1000'],
             },
         });
         // 获取访问点的 ID

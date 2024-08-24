@@ -110,10 +110,10 @@ def create_instance(username, group_name):
 
     # Custom Nodes Clone
     {repo_clone_commands}
-    sudo chown -R ubuntu:ubuntu {comfyui_home_dir}/custom_nodes/*
+    chown -R ubuntu:ubuntu {comfyui_home_dir}/custom_nodes/*
 
     # Set Comfyui as system service
-    sudo cat << EOF > /etc/systemd/system/comfyui.service
+    cat << EOF > /etc/systemd/system/comfyui.service
     [Unit]
     Description=ComfyUI Service
     After=network.target
@@ -129,9 +129,9 @@ def create_instance(username, group_name):
 EOF
 
     # start comfyui as system service
-    sudo systemctl daemon-reload
-    sudo systemctl enable comfyui.service
-    sudo systemctl start comfyui.service
+    systemctl daemon-reload
+    systemctl enable comfyui.service
+    systemctl start comfyui.service
     echo "---------user data end-----------"
     """
     
@@ -259,31 +259,29 @@ def check_efs_directory_and_produce_mount_cmd(group_name, username):
             ''')
 
         mount_cmd.append(f'''
-        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/global {ec2_paths['global']};
-        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']};
-        sudo mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']};
-        echo "{file_system_id}:/{dir_name}/global {ec2_paths['global']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
-        echo "{file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
-        echo "{file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | sudo tee -a /etc/fstab;
+        mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/global {ec2_paths['global']};
+        mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']};
+        mount -t efs -o tls,iam,accesspoint={access_point_models_id} {file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']};
+        echo "{file_system_id}:/{dir_name}/global {ec2_paths['global']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/groups/{group_name} {ec2_paths['group']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | tee -a /etc/fstab;
+        echo "{file_system_id}:/{dir_name}/users/{username} {ec2_paths['user']} efs _netdev,tls,iam,accesspoint={access_point_models_id} 0 0" | tee -a /etc/fstab;
         ''')
     
     # 处理不同用户挂载所属Group目录逻辑
     ec2_group_output_path = os.path.join(comfyui_home_dir, 'output', group_name)
     ec2_user_output_path = os.path.join(comfyui_home_dir, 'output', group_name, username)
-    efs_group_output_path = os.path.join(mount_path, 'output', group_name)
-    check_create_directory(efs_group_output_path)
+    efs_user_output_path = os.path.join(mount_path, 'output', group_name, username)
+    check_create_directory(efs_user_output_path)
 
     mount_cmd.append(f'''
-    sudo mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/{group_name} {ec2_group_output_path}
-    echo "{file_system_id}:/{group_name} {ec2_group_output_path} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" | sudo tee -a /etc/fstab;
-    ''')
-    mount_cmd.append(f'''
-    if [ ! -d "{ec2_user_output_path}" ]; then
-        mkdir -p {ec2_user_output_path};
+    if [ ! -d "{ec2_group_output_path}" ]; then
+        mkdir -p {ec2_group_output_path};
     fi
     ''')
+
     mount_cmd.append(f'''
-        chown -R ubuntu:ubuntu {ec2_group_output_path}
+    mount -t efs -o tls,iam,accesspoint={access_point_output_id} {file_system_id}:/{group_name} {ec2_group_output_path}
+    echo "{file_system_id}:/{group_name} {ec2_group_output_path} efs _netdev,tls,iam,accesspoint={access_point_output_id} 0 0" | tee -a /etc/fstab;
     ''')
     with open(os.path.join(start_script_dir, f'mount.sh'), 'w') as f:
         f.write(''.join(mount_cmd))
