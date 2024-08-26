@@ -97,6 +97,7 @@ export class LambdaStack extends NestedStack {
             ...functionSettings,
             functionName: 'ComfyUI-Servers-Get-Func',
             handler: 'comfyui_servers_get.lambda_handler',
+            vpc: props.vpc,
             environment: {
                 'USER_COMFYUI_SERVERS_TABLE': Constants.USER_COMFYUI_SERVERS_TABLE,
             },
@@ -138,7 +139,7 @@ export class LambdaStack extends NestedStack {
                 source: ["aws.ec2"],
                 detailType: ["EC2 Instance State-change Notification"],
                 detail: {
-                state: ["running", "stopped"]
+                state: ["running", "stopped", "stopping"]
                 }
             }
         });

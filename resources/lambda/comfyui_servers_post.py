@@ -13,6 +13,7 @@ INSTANCE_GPU=[
 ami_id = os.environ.get('EC2_AMI_ID')
 key_name = os.environ.get('EC2_KEY_NAME')
 instance_type = os.environ.get('EC2_INSTANCE_TYPE')
+comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
 security_group_id = os.environ.get('SECURITY_GROUP_ID')
 ec2_vpc_id = os.environ.get('EC2_VPC_ID')
 resource_tag = os.environ.get('RESOURCE_TAG')
@@ -121,7 +122,7 @@ def create_instance(username, group_name):
     [Service]
     User=ubuntu
     WorkingDirectory=/home/ubuntu/comfy/ComfyUI
-    ExecStart=/home/ubuntu/venv/bin/python3 main.py --listen 0.0.0.0 --port 8848 --output-directory {user_output_dir}
+    ExecStart=/home/ubuntu/venv/bin/python3 main.py --listen 0.0.0.0 --port {comfyui_server_port} --output-directory {user_output_dir}
     Restart=always
 
     [Install]

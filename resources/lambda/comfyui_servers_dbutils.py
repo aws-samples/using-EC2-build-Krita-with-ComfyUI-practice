@@ -4,6 +4,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 comfyui_servers_table = os.environ.get('USER_COMFYUI_SERVERS_TABLE')
+comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(comfyui_servers_table)
 
@@ -50,6 +51,7 @@ def create_comfyui_servers_info(username, group_name, instance_id):
                 'group_name': group_name,
                 'instance_id': instance_id,
                 'status': 'creating',
+                'port': comfyui_server_port,
                 'created_at': now,
                 'updated_at': now,
         }
@@ -58,7 +60,7 @@ def create_comfyui_servers_info(username, group_name, instance_id):
         print(f'Error stopping instance: {e}')
         raise e
 
-def update_comfyui_server_info(username, instance_id, status, server_info):
+def update_comfyui_server_info(username, instance_id, status, server_info, private_ip):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
         response = table.update_item(
@@ -66,16 +68,18 @@ def update_comfyui_server_info(username, instance_id, status, server_info):
                 'username': username,  # 分区键
                 'instance_id': instance_id  # 排序键
             },
-            UpdateExpression="SET #status = :status,#server_info = :server_info, #updated_at = :updated_at",  # 更新表达式
+            UpdateExpression="SET #status = :status,#server_info = :server_info, #updated_at = :updated_at, #private_ip = :private_ip",  # 更新表达式
             ExpressionAttributeNames={
                 '#status': 'status',  # 使用表达式属性名称来避免与保留字冲突
                 '#updated_at': 'updated_at',
                 '#server_info': 'server_info',
+                '#private_ip': 'private_ip',
             },
             ExpressionAttributeValues={
                 ':status': status,  # 新的状态值
                 ':updated_at': now,  # 当前时间
-                ':server_info': server_info
+                ':server_info': server_info,
+                ':private_ip': private_ip
             },
             ReturnValues="UPDATED_NEW"  # 返回更新后的新值
         )

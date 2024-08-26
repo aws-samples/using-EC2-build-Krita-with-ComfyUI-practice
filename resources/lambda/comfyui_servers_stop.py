@@ -19,7 +19,6 @@ def lambda_handler(event, context):
     if result:
         for item in result:
             stop_instance(item['instance_id'])
-            update_status(username, item['instance_id'], status='stopping')
             return {
                 "statusCode": 200,
                 "body": json.dumps({"instance_id": item['instance_id'], "code": 200})
