@@ -298,11 +298,29 @@ def get_pub_subnet():
         if 'MapPublicIpOnLaunch' in subnet and subnet['MapPublicIpOnLaunch']:
             public_subnets.append(subnet['SubnetId'])
 
-    # 随机选择一个公有子网
-    if public_subnets:
-        selected_subnet = random.choice(public_subnets)
-        print(f"选择的公有子网: {selected_subnet}")
-        return selected_subnet
-    else:
-        print("没有找到公有子网。")
-        raise Exception(f'No public subnet in VPC: {ec2_vpc_id}')
+    if not public_subnets:
+        raise Exception(f'没有找到公有子网。')
+
+    unsupported_subnets = []
+
+    # 检查可用区是否支持实例类型
+    instance_type_info = ec2_client.describe_instance_type_offerings(
+        LocationType='availability-zone',
+        Filters=[{'Name': 'instance-type', 'Values': [instance_type]}]
+    )
+    supported_azs = [offering['Location'] for offering in instance_type_info['InstanceTypeOfferings']]
+        
+    print(f"Region: {region}; support instance type: {instance_type}, AZs: {supported_azs}")    
+    for selected_subnet in public_subnets:
+        subnet_info = ec2_client.describe_subnets(SubnetIds=[selected_subnet])['Subnets'][0]
+        availability_zone = subnet_info['AvailabilityZone']
+        if availability_zone not in supported_azs:
+            unsupported_subnets.append(selected_subnet)
+
+    if len(unsupported_subnets) == len(public_subnets):
+        raise Exception(f'所有公有子网都不支持实例类型 {instance_type}.')
+    # 返回所有支持当前机型的公有子网
+    supported_subnets = list(set(public_subnets) - set(unsupported_subnets))
+
+    print(f"supported_subnets: {supported_subnets}")
+    return random.choice(supported_subnets)
