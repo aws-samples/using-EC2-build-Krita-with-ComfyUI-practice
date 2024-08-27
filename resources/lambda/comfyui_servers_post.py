@@ -38,6 +38,7 @@ ubuntu_home = '/home/ubuntu'
 comfyui_home_dir = '/home/ubuntu/comfy/ComfyUI'
 start_script_folder = 'start-script'
 model_dirs = ['checkpoints', 'clip', 'clip_vision', 'configs', 'controlnet', 'diffusers', 'diffusion_models', 'embeddings', 'gligen', 'hypernetworks', 'inpaint', 'ipadapter', 'loras', 'mmdets', 'onnx', 'photomaker', 'sams', 'style_models', 'ultralytics', 'unet', 'upscale_models', 'vae', 'vae_approx']
+alarm_name_prefix='GPUUtilizationLow-'
 def lambda_handler(event, context):
     
     print(event)
@@ -172,7 +173,7 @@ EOF
         # 添加告警,一旦GPU使用过低超过30分钟, 直接Stop
 
         cw.put_metric_alarm(
-            AlarmName=f'GPUUtilizationLow-{instance_id}',
+            AlarmName=f'{alarm_name_prefix}{instance_id}',
             ComparisonOperator='LessThanThreshold',
             EvaluationPeriods=30,
             MetricName='nvidia_smi_utilization_gpu',
@@ -212,7 +213,19 @@ EOF
 def start_instance(instance_id):
     try:
         response = ec2_client.start_instances(InstanceIds=[instance_id])
-        print(f'Successfully stopped instance: {instance_id}')
+        print(f'Successfully started instance: {instance_id}')
+        alarms = cw.describe_alarms(
+            AlarmNames=[
+                f'{alarm_name_prefix}{instance_id}'
+            ]
+        )['MetricAlarms']
+        print(alarms)
+        if alarms:
+            # 重置GPU告警警报
+            for alarm in alarms:
+                if alarm['AlarmName'] == f'{alarm_name_prefix}{instance_id}':
+                    cw.delete_alarms(AlarmNames=[alarm['AlarmName']])
+                    print(f'已重置警报: {alarm['AlarmName']}')
         return response
     except Exception as e:
         print(f'Error stopping instance: {e}')
