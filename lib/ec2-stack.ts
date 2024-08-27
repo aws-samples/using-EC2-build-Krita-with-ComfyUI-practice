@@ -4,6 +4,8 @@ import * as cdk from "aws-cdk-lib";
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as efs from 'aws-cdk-lib/aws-efs';
 import * as iam from "aws-cdk-lib/aws-iam";
+import { constants } from "buffer";
+import { Constants } from "./constants";
 
 export interface EC2StackProps extends NestedStackProps {
     vpc: ec2.Vpc,
@@ -89,11 +91,13 @@ export class EC2Stack extends NestedStack {
             "systemctl status filebrowser"
         );
 
+        const key_pair = ec2.KeyPair.fromKeyPairName(this, "KeyPair", Constants.EC2_KEY_NAME)
         const filebroswerEC2 = new ec2.Instance(this, 'FileBroswerInstance', {
             instanceName: 'File Browser Instance',
             instanceType: new ec2.InstanceType('t3.large'), // 选择实例类型
             machineImage: ec2.MachineImage.latestAmazonLinux2023(), // 使用最新的 Amazon Linux AMI
             vpc: props.vpc,
+            keyPair: key_pair,
             securityGroup,
             vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC }, 
             role: filebroswerRole,
