@@ -12,6 +12,8 @@ USER_COMFYUI_SERVERS_TABLE='user-comfyui-servers'
 COMFYUI_CUSTOM_NODES_TABLE='comfyui_custom_nodes'
 # 指定自己的VPC CIDR
 VPC_CIDR='10.0.0.0/16'
+# 指定机器闲置时间,单位为分钟
+SERVER_IDLE_TIME='30'
 
 echo "EC2_AMI_ID=${EC2_AMI_ID}" > .env
 echo "EC2_KEY_NAME=${EC2_KEY_NAME}" >> .env
@@ -19,3 +21,4 @@ echo "EC2_INSTANCE_TYPE=${EC2_INSTANCE_TYPE}" >> .env
 echo "USER_COMFYUI_SERVERS_TABLE=${USER_COMFYUI_SERVERS_TABLE}" >> .env
 echo "COMFYUI_CUSTOM_NODES_TABLE=${COMFYUI_CUSTOM_NODES_TABLE}" >> .env
 echo "VPC_CIDR=${VPC_CIDR}" >> .env
+echo "SERVER_IDLE_TIME=${SERVER_IDLE_TIME}" >> .env

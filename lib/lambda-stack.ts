@@ -69,6 +69,7 @@ export class LambdaStack extends NestedStack {
                 'RESOURCE_TAG': Constants.RESOURCE_TAG,
                 'EC2_ROLE_ARN': props.comfyuiInstanceProfile.attrArn,
                 'COMFYUI_SERVER_PORT': Constants.COMFYUI_SERVER_PORT,
+                'SERVER_IDLE_TIME': Constants.SERVER_IDLE_TIME,
                 'ACCESS_POINT_MODELS_ID': props.accessPointModels.accessPointId,
                 'ACCESS_POINT_OUTPUT_ID': props.accessPointOutput.accessPointId,
                 'ACCESS_POINT_START_SCRIPT_ID': props.accessPointStartScript.accessPointId,

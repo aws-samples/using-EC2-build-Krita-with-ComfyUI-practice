@@ -14,6 +14,7 @@ ami_id = os.environ.get('EC2_AMI_ID')
 key_name = os.environ.get('EC2_KEY_NAME')
 instance_type = os.environ.get('EC2_INSTANCE_TYPE')
 comfyui_server_port = os.environ.get('COMFYUI_SERVER_PORT')
+server_idle_time = os.environ.get('SERVER_IDLE_TIME')
 security_group_id = os.environ.get('SECURITY_GROUP_ID')
 ec2_vpc_id = os.environ.get('EC2_VPC_ID')
 resource_tag = os.environ.get('RESOURCE_TAG')
@@ -43,8 +44,9 @@ def lambda_handler(event, context):
     
     print(event)
     body = json.loads(event['body'])
-    username = body.get('username','No body')
-    group_name = body.get('group_name','No Group')
+    username = body.get('username', 'No body')
+    group_name = body.get('group_name', 'No Group')
+    idle_time = body.get('server_idle_time', server_idle_time)
     result = query_comfyui_servers_by_username(username)
     if result:
         print(f"Username:{username} already has a comfyui server")
@@ -53,7 +55,7 @@ def lambda_handler(event, context):
             response = ec2_client.describe_instances(InstanceIds=[instance_id])
             instance_status = response['Reservations'][0]['Instances'][0]['State']['Name']
             if instance_status == 'stopped':
-                start_instance(instance_id=instance_id)
+                start_instance(instance_id=instance_id, idle_time=idle_time)
                 update_status(username=username, instance_id=instance_id, status='starting')
             else:
                 return {
@@ -62,7 +64,7 @@ def lambda_handler(event, context):
                 }
     else:
         print(f"Username:{username} doesn't have a comfyui server, now create a new one.")
-        instances = create_instance(username=username, group_name=group_name)
+        instances = create_instance(username=username, group_name=group_name, idle_time=idle_time)
         instance_id = instances[0].id
 
     return {
@@ -70,7 +72,7 @@ def lambda_handler(event, context):
         "body": json.dumps({"instance_id": instance_id, "code": 200})
     }
 
-def create_instance(username, group_name):
+def create_instance(username, group_name, idle_time=30):
     # Get Global Custom Nodes
     repo_list = get_custom_nodes_by_type('global')
     # Convert repo_list to a string for the user data script
@@ -171,40 +173,7 @@ EOF
         )
 
         instance_id=instances[0].id
-        gpu_info = next((item for item in INSTANCE_GPU if item['instance'] == instance_type[:2]), None)
-        # 添加告警,一旦GPU使用过低超过30分钟, 直接Stop
-
-        cw.put_metric_alarm(
-            AlarmName=f'{alarm_name_prefix}{instance_id}',
-            ComparisonOperator='LessThanThreshold',
-            EvaluationPeriods=30,
-            MetricName='nvidia_smi_utilization_gpu',
-            Namespace='CWAgent',
-            Period=60,
-            Statistic='Maximum',
-            Threshold=1.0,
-            ActionsEnabled=True,
-            AlarmActions=[f'arn:aws:swf:{region}:{account_id}:action/actions/AWS_EC2.InstanceId.Stop/1.0'],
-            AlarmDescription='Alarm when GPU utilization is low for 30 minutes',
-            Dimensions=[
-                {
-                    'Name': 'InstanceId',
-                    'Value': instance_id
-                },
-                {
-                    'Name': 'name', 
-                    'Value': gpu_info['gpu']
-                },
-                {
-                    'Name': 'index', 
-                    'Value': '0'
-                },
-                {
-                    'Name': 'arch', 
-                    'Value': gpu_info['arch']
-                }
-            ]
-        )
+        put_alarm_metric_alarm(instance_id=instance_id, idle_time=idle_time)
         create_comfyui_servers_info(username=username, group_name=group_name, instance_id=instance_id)
     except Exception as e:
         print(f'Error stopping instance: {e}')
@@ -212,28 +181,60 @@ EOF
 
     return instances
 
-def start_instance(instance_id):
+def start_instance(instance_id, idle_time):
     try:
         response = ec2_client.start_instances(InstanceIds=[instance_id])
         print(f'Successfully started instance: {instance_id}')
-        alarms = cw.describe_alarms(
-            AlarmNames=[
-                f'{alarm_name_prefix}{instance_id}'
-            ]
-        )['MetricAlarms']
-        print(alarms)
-        if alarms:
-            # 重置GPU告警警报
-            for alarm in alarms:
-                if alarm['AlarmName'] == f'{alarm_name_prefix}{instance_id}':
-                    cw.delete_alarms(AlarmNames=[alarm['AlarmName']])
-                    print(f'已重置警报: {alarm['AlarmName']}')
+        put_alarm_metric_alarm(instance_id, idle_time)
+        alarm_response = cw.set_alarm_state(
+            AlarmName=f'{alarm_name_prefix}{instance_id}',
+            StateValue='OK',
+            StateReason='Reset alarm when starting instance'
+        )
+        print(f'Alarm reset response: {alarm_response}')
         return response
     except Exception as e:
         print(f'Error stopping instance: {e}')
         raise e
-    
+
+def put_alarm_metric_alarm(instance_id, idle_time):
+    gpu_info = next((item for item in INSTANCE_GPU if item['instance'] == instance_type[:2]), None)
+    put_response = cw.put_metric_alarm(
+        AlarmName=f'{alarm_name_prefix}{instance_id}',
+        ComparisonOperator='LessThanThreshold',
+        EvaluationPeriods=int(idle_time),
+        MetricName='nvidia_smi_utilization_gpu',
+        Namespace='CWAgent',
+        Period=60,
+        Statistic='Maximum',
+        Threshold=1.0,
+        ActionsEnabled=True,
+        AlarmActions=[f'arn:aws:swf:{region}:{account_id}:action/actions/AWS_EC2.InstanceId.Stop/1.0'],
+        AlarmDescription=f'Alarm when GPU utilization is low for {idle_time} minutes',
+        Dimensions=[
+            {
+                'Name': 'InstanceId',
+                'Value': instance_id
+            },
+            {
+                'Name': 'name', 
+                'Value': gpu_info['gpu']
+            },
+            {
+                'Name': 'index', 
+                'Value': '0'
+            },
+            {
+                'Name': 'arch', 
+                'Value': gpu_info['arch']
+            }
+        ],
+        TreatMissingData='notBreaching' #没有数据的点不不触发告警.
+    )
+    print(f'Alarm reset response: {put_response}')
+
 def check_create_directory(directory):
+
     """检查目录是否存在，如果不存在则创建目录。"""
     if not os.path.exists(directory):  
         os.makedirs(directory)  
