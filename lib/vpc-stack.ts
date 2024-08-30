@@ -65,7 +65,7 @@ export class VPCStack extends NestedStack {
         });
 
         this.comfyuiInstanceProfile = new iam.CfnInstanceProfile(this, 'ComfyUIInstanceProfile', {
-            instanceProfileName: 'ComfyUI-Instance-Profile',
+            instanceProfileName: `ComfyUI-Instance-Profile-${cdk.Stack.of(this).region}`,
             roles: [comfyuiEC2Role.roleName],
         });
 
