@@ -49,7 +49,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
+					"raw": "{\n    \"node_name\": \"ComfyUI_UltimateSDUpscale\",\n    \"node_type\": \"global\",\n    \"group_name\": \"group1\",\n    \"repo_url\":\"https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git\",\n    \"extra_parameter\": \"--recursive\",\n    \"status\": \"active\",\n    \"creator\": \"user2\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -57,12 +57,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/comfyui-servers",
+					"raw": "{{url}}/comfyui-servers/custom-nodes",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
-						"comfyui-servers"
+						"comfyui-servers",
+						"custom-nodes"
 					]
 				}
 			},
