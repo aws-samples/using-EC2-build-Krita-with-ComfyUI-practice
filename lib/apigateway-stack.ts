@@ -38,6 +38,11 @@ export class ApigatewayStack extends NestedStack {
             endpointTypes: [
                 _apigateway.EndpointType.EDGE
             ],
+            defaultCorsPreflightOptions: {
+                allowOrigins: ['*'], // 允许所有来源
+                allowMethods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'], // 允许的HTTP方法
+                allowHeaders: ['Content-Type', 'Authorization'] // 允许的请求头
+            }
         });
 
         const apiKey = new _apigateway.ApiKey(this, 'COMFYUI-SERVERS-API-KEY', {
