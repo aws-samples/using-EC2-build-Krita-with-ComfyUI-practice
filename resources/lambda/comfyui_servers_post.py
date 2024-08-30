@@ -79,7 +79,7 @@ def create_instance(username, group_name, idle_time=30):
     repo_clone_commands = "\n".join([
         f"""
         if [ ! -d {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')} ]; then
-            git clone {repo['repo_url']} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')} &&
+            git clone {repo['repo_url']} {repo.get('extra_parameter', '')} {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')} &&
             if [ -f {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')}/requirements.txt ]; then
                 source /home/ubuntu/venv/bin/activate && pip install -r {comfyui_home_dir}/custom_nodes/{repo['repo_url'].split('/')[-1].replace('.git', '')}/requirements.txt;
             fi
@@ -125,7 +125,7 @@ def create_instance(username, group_name, idle_time=30):
     After=network.target
 
     [Service]
-    User=ubuntu
+    User=root
     WorkingDirectory=/home/ubuntu/comfy/ComfyUI
     ExecStart=/home/ubuntu/venv/bin/python3 main.py --listen 0.0.0.0 --port {comfyui_server_port} --output-directory {user_output_dir}
     Restart=always

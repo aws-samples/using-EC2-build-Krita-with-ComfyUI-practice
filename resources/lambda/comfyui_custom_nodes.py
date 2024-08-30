@@ -33,6 +33,7 @@ def create_custom_nodes(event):
             "node_type": body.get("node_type"),
             "group_name": body.get("group_name"),
             "repo_url": body.get("repo_url"),
+            "extra_parameter": body.get("extra_parameter"),
             "status": body.get("status"),
             "creator": body.get("creator"),
             'created_at': now,
@@ -55,13 +56,14 @@ def update_custom_nodes(event):
             Key={
                 'id': event['pathParameters']["id"]
             },
-            UpdateExpression="SET #node_name = :node_name,#node_type = :node_type,#group_name = :group_name,#status =:status, #repo_url = :repo_url, #updated_at = :updated_at",  # 更新表达式
+            UpdateExpression="SET #node_name = :node_name,#node_type = :node_type,#group_name = :group_name,#status =:status, #repo_url = :repo_url, #updated_at = :updated_at, #extra_parameter = :extra_parameter",  # 更新表达式
             ExpressionAttributeNames={
                 '#status': 'status',  # 使用表达式属性名称来避免与保留字冲突
                 '#updated_at': 'updated_at',
                 '#node_name': 'node_name',
                 '#node_type': 'node_type',
                 '#group_name': 'group_name',
+                '#extra_parameter': 'extra_parameter',
                 '#repo_url': 'repo_url',
             },
             ExpressionAttributeValues={
@@ -70,6 +72,7 @@ def update_custom_nodes(event):
                 ':node_name': body.get("node_name"),
                 ':node_type': body.get("node_type"),
                 ':group_name': body.get("group_name"),
+                ':extra_parameter': body.get("extra_parameter", ""),
                 ':repo_url': body.get("repo_url"),
             },
             ReturnValues="ALL_NEW"  # 返回更新后的新值
