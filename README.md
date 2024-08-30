@@ -21,6 +21,7 @@ Post Body:
     {
         "username": # 用户名,
         "group_name": # 部门名称
+        "server_idle_time": #服务器闲置时间
     }
 Response:
 成功:{
