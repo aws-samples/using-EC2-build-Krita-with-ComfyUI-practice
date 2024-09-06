@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-# 使用Amazon EC2 来构建Comfy UI Servers
+## 使用Amazon EC2 来构建Comfy UI Servers
 ### 架构图
 ![Arch](arch.jpg "架构图") 
 ### 部署步骤
@@ -76,25 +75,6 @@ Response:
 失败:
     {"message": "", "code": 400}
 ```
-
-## Useful commands
-
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
-=======
-## My Project
-
-TODO: Fill this README out!
-
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
@@ -102,5 +82,3 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
-
->>>>>>> 5e004d939155450da75dd019963953e0e6700517
