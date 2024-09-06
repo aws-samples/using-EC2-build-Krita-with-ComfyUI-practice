@@ -5,6 +5,9 @@
 #### 生成环境变量, 请根据自身环境信息修改`gen_env.sh`后,执行脚本
 ```
 sh gen_env.sh
+npm install
+cdk bootstrap
+cdk deploy
 ```
 
 ### API说明
