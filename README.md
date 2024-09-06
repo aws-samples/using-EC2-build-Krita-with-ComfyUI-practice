@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 使用Amazon EC2 来构建Comfy UI Servers
 ### 架构图
 ![Arch](arch.jpg "架构图") 
@@ -84,3 +85,22 @@ Response:
 * `npx cdk deploy`  deploy this stack to your default AWS account/region
 * `npx cdk diff`    compare deployed stack with current state
 * `npx cdk synth`   emits the synthesized CloudFormation template
+=======
+## My Project
+
+TODO: Fill this README out!
+
+Be sure to:
+
+* Change the title in this README
+* Edit your repository description on GitHub
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+## License
+
+This library is licensed under the MIT-0 License. See the LICENSE file.
+
+>>>>>>> 5e004d939155450da75dd019963953e0e6700517
