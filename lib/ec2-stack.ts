@@ -6,6 +6,7 @@ import * as efs from 'aws-cdk-lib/aws-efs';
 import * as iam from "aws-cdk-lib/aws-iam";
 import { constants } from "buffer";
 import { Constants } from "./constants";
+import * as crypto from "crypto";
 
 export interface EC2StackProps extends NestedStackProps {
     vpc: ec2.Vpc,
@@ -40,8 +41,10 @@ export class EC2Stack extends NestedStack {
         });
         // 允许 SSH 访问
         securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'allow ssh access');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'allow http access');
+        //securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'allow http access');
 
+        // Generate File Broswer User Password
+        const password = crypto.randomBytes(20).toString('hex');
 
         const userData = ec2.UserData.forLinux();
         userData.addCommands(
@@ -61,7 +64,7 @@ export class EC2Stack extends NestedStack {
             "\"log\": \"/data/filebrowser/filebrowser.log\",",
             "\"locale\": \"zh-cn\",",
             "\"username\": \"admin\",",
-            "\"password\": \"admin\",",
+            `\"password\": \"${password}\",`,
             "\"root\": \"/\",",
             "\"scope\": \"/\"",
             "}",
@@ -111,9 +114,7 @@ export class EC2Stack extends NestedStack {
         });
 
         new cdk.CfnOutput(scope, 'File Broswer Instance IP:', { value: filebroswerEC2.instancePublicIp });
+        new cdk.CfnOutput(scope, 'File Broswer User / Password:', { value: 'admin/' + password });
 
     }
-
-    
-
 }
