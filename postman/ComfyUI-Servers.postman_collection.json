@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "f749d85c-3b5a-4aba-ba21-b0c777d71204",
+		"_postman_id": "2bd48308-b279-4cc8-9275-58b5da6c5c88",
 		"name": "ComfyUI-Servers",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "2238923"
+		"_exporter_id": "11377516"
 	},
 	"item": [
 		{
-			"name": "ComfyUI Servers Create",
+			"name": "Create Servers",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -18,114 +18,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/comfyui-servers",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"comfyui-servers"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Custom Nodes Create",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "x-api-key",
-						"value": "{{api-key}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"node_name\": \"ComfyUI_UltimateSDUpscale\",\n    \"node_type\": \"global\",\n    \"group_name\": \"group1\",\n    \"repo_url\":\"https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git\",\n    \"extra_parameter\": \"--recursive\",\n    \"status\": \"active\",\n    \"creator\": \"user2\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/comfyui-servers/custom-nodes",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"comfyui-servers",
-						"custom-nodes"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Custom Nodes GET by nodetype",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "x-api-key",
-						"value": "{{api-key}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/comfyui-servers/custom-nodes?node_type=group",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"comfyui-servers",
-						"custom-nodes"
-					],
-					"query": [
-						{
-							"key": "node_type",
-							"value": "group"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Custom Nodes GET by nodetype Copy",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "x-api-key",
-						"value": "{{api-key}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
+					"raw": "{\n    \"username\": \"user1\",\n    \"group_name\": \"AI\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -146,40 +39,7 @@
 			"response": []
 		},
 		{
-			"name": "Custom Nodes Delete",
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "x-api-key",
-						"value": "{{api-key}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/comfyui-servers/custom-nodes/a386ee87-5b9c-11ef-a588-4d07a07baea5",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"comfyui-servers",
-						"custom-nodes",
-						"a386ee87-5b9c-11ef-a588-4d07a07baea5"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Custom Nodes Update",
+			"name": "Stop Servers",
 			"request": {
 				"method": "PATCH",
 				"header": [
@@ -190,40 +50,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"node_name\": \"test_node\",\n    \"node_type\": \"group\",\n    \"group_name\": \"group-name\",\n    \"repo_url\":\"https://github.com/myawsdemo/llm-text-keyword-summary123.git\",\n    \"status\": \"inactive\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{url}}/comfyui-servers/custom-nodes/f5cfb408-5b8b-11ef-b0c6-a73ae31c46cc",
-					"host": [
-						"{{url}}"
-					],
-					"path": [
-						"comfyui-servers",
-						"custom-nodes",
-						"f5cfb408-5b8b-11ef-b0c6-a73ae31c46cc"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "ComfyUI Servers Stop",
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "x-api-key",
-						"value": "{{api-key}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\": \"user2\",\n    \"group_name\": \"group1\"\n}",
+					"raw": "{\n    \"username\": \"user1\",\n    \"group_name\": \"AI\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -244,12 +71,262 @@
 			"response": []
 		},
 		{
-			"name": "ComfyUI Server Get",
+			"name": "Delete Servers",
 			"request": {
-				"method": "GET",
-				"header": []
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"user1\",\n    \"group_name\": \"AI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/delete",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"delete"
+					]
+				}
 			},
 			"response": []
+		},
+		{
+			"name": "Get ComfyUI Server",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/?username=小李",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						""
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "小李"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create custom-nodes",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"node_name\": \"Inpaint Nodes\",\n  \"node_type\": \"global\",\n  \"group_name\": \"group1\",\n  \"repo_url\": \"https://github.com/Acly/comfyui-inpaint-nodes.git\",\n  \"status\": \"available\",\n  \"creator\": \"user1\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/custom-nodes",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"custom-nodes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update custom-nodes",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"node_name\": \"ComfyUI Inspire Pack\",\n  \"node_type\": \"global\",\n  \"group_name\": \"group1\",\n  \"repo_url\": \"https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git\",\n  \"status\": \"available\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/custom-nodes/22676014-5dfb-11ef-baa6-81ab540bf00c",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"custom-nodes",
+						"22676014-5dfb-11ef-baa6-81ab540bf00c"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get custom-nodes",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/comfyui-servers/custom-nodes/22676014-5dfb-11ef-baa6-81ab540bf00c",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"custom-nodes",
+						"22676014-5dfb-11ef-baa6-81ab540bf00c"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get custom-nodes Copy",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "{{api-key}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/comfyui-servers/custom-nodes/22676014-5dfb-11ef-baa6-81ab540bf00c",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"comfyui-servers",
+						"custom-nodes",
+						"22676014-5dfb-11ef-baa6-81ab540bf00c"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "api-key",
+			"value": ""
+		},
+		{
+			"key": "url",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "url-ap-northeast-1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "url-us-east-1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "key-us-east-1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "key-ap-northeast-1",
+			"value": "",
+			"type": "string"
 		}
 	]
 }
